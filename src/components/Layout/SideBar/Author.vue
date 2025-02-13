@@ -3,11 +3,11 @@
     <!-- 作者信息 -->
     <div class="author-container">
       <!-- 作者头像 -->
-      <img class="author-avatar" :src="blog.blogInfo.siteConfig.authorAvatar" />
+      <img class="author-avatar" :src="blogStore.blogInfo.website_config.website_avatar" />
       <!-- 作者名称 -->
-      <p class="author-name">{{ blog.blogInfo.siteConfig.siteAuthor }}</p>
+      <p class="author-name">{{ blogStore.blogInfo.website_config.website_author }}</p>
       <!-- 网站简介 -->
-      <div class="site-desc">{{ blog.blogInfo.siteConfig.siteIntro }}</div>
+      <div class="site-desc">{{ blogStore.blogInfo.website_config.website_intro }}</div>
     </div>
     <!-- 博客信息 -->
     <blog-info></blog-info>
@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import { useBlogStore } from "@/store";
-const blog = useBlogStore();
 
+const blogStore = useBlogStore();
 </script>
 
 <style scoped></style>

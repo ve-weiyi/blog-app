@@ -1,45 +1,62 @@
 <template>
-  <n-modal class="bg" v-model:show="dialogVisible" preset="dialog" :show-icon="false" transform-origin="center"
-    style="padding-bottom: 2rem;" :block-scroll="false">
-    <n-input class="mt-11" placeholder="邮箱号" v-model:value="emailForm.email"></n-input>
+  <n-modal
+    v-model:show="dialogVisible"
+    class="bg"
+    preset="dialog"
+    :show-icon="false"
+    transform-origin="center"
+    style="padding-bottom: 2rem"
+    :block-scroll="false"
+  >
+    <div class="login-title">绑定邮箱</div>
+    <n-input v-model:value="emailForm.email" class="mt-11" placeholder="邮箱号"></n-input>
     <n-input-group class="mt-11">
-      <n-input placeholder="验证码" v-model:value="emailForm.code" />
+      <n-input v-model:value="emailForm.verify_code" placeholder="验证码" />
       <n-button color="#49b1f5" :disabled="flag" @click="sendCode">
-        {{ timer == 0 ? '发送' : `${timer}s` }}
+        {{ timer == 0 ? "发送" : `${timer}s` }}
       </n-button>
     </n-input-group>
-    <n-button class="mt-11" color="#4caf50" style="width:100%" @click="handleUpdate" :loading="loading">
+    <n-button
+      class="mt-11"
+      color="#4caf50"
+      style="width: 100%"
+      :loading="loading"
+      @click="handleUpdate"
+    >
       绑定
     </n-button>
   </n-modal>
 </template>
 
 <script setup lang="ts">
-import { getCode } from '@/api/login';
-import { updateUserEmail } from '@/api/user';
-import { EmailForm } from '@/api/user/types';
 import { useAppStore, useUserStore } from "@/store";
-import { useIntervalFn } from '@vueuse/core';
-const user = useUserStore();
-const app = useAppStore();
+import { useIntervalFn } from "@vueuse/core";
+import { bindUserEmailApi, sendBindEmailApi } from "@/api/auth";
+
+const userStore = useUserStore();
+const appStore = useAppStore();
 const data = reactive({
   timer: 0,
   flag: false,
   loading: false,
   emailForm: {
     email: "",
-    code: "",
-  } as EmailForm,
+    verify_code: "",
+  },
 });
 const { timer, flag, loading, emailForm } = toRefs(data);
-const { pause, resume } = useIntervalFn(() => {
-  timer.value--;
-  if (timer.value <= 0) {
-    // 停止定时器
-    pause();
-    flag.value = false;
-  }
-}, 1000, { immediate: false });
+const { pause, resume } = useIntervalFn(
+  () => {
+    timer.value--;
+    if (timer.value <= 0) {
+      // 停止定时器
+      pause();
+      flag.value = false;
+    }
+  },
+  1000,
+  { immediate: false }
+);
 const start = (time: number) => {
   flag.value = true;
   timer.value = time;
@@ -53,34 +70,33 @@ const sendCode = () => {
     return;
   }
   start(60);
-  getCode(emailForm.value.email).then(({ data }) => {
-    if (data.flag) {
-      window.$message?.success("发送成功");
-    }
+  sendBindEmailApi({ username: emailForm.value.email }).then((res) => {
+    window.$message?.success("发送成功");
   });
 };
 const dialogVisible = computed({
-  get: () => app.emailFlag,
-  set: (value) => app.emailFlag = value,
+  get: () => appStore.emailFlag,
+  set: (value) => (appStore.emailFlag = value),
 });
 const handleUpdate = () => {
-  if (emailForm.value.code.trim().length != 6) {
+  if (emailForm.value.verify_code.trim().length != 6) {
     window.$message?.warning("请输入6位验证码");
     return;
   }
   loading.value = true;
-  updateUserEmail(emailForm.value).then(({ data }) => {
-    if (data.flag) {
+  bindUserEmailApi(emailForm.value)
+    .then((res) => {
       window.$message?.success("修改成功");
-      user.email = emailForm.value.email;
+      userStore.userInfo.email = emailForm.value.email;
       emailForm.value = {
         email: "",
-        code: "",
-      }
-      app.emailFlag = false;
-    }
-    loading.value = false;
-  });
+        verify_code: "",
+      };
+      dialogVisible.value = false;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 };
 </script>
 

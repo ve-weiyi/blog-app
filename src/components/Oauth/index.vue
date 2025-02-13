@@ -10,69 +10,37 @@
 </template>
 
 <script setup lang="ts">
-import { giteeLogin, githubLogin, qqLogin } from "@/api/login";
 import { useUserStore } from "@/store";
-import { setToken } from "@/utils/token";
-const user = useUserStore();
+import { OauthLoginReq } from "@/api/types";
+
+const userStore = useUserStore();
 const router = useRouter();
 const route = useRoute();
 onMounted(() => {
-  if (route.path == "/oauth/login/qq") {
-    qqLogin({ code: route.query.code as string }).then(
-      async ({ data }) => {
-        if (data.flag) {
-          // 设置Token
-          setToken(data.data);
-          // 获取用户信息
-          await user.GetUserInfo();
-          if (user.email === "") {
-            window.$message?.warning("请绑定邮箱以便及时收到回复");
-          } else {
-            window.$message?.success("登录成功");
-          }
-        }
+  console.log("route", route.query.code, route.query.state);
+  let data = {
+    platform: route.params.platform as string,
+    code: route.query.code as string,
+    state: route.query.state as string,
+  } as OauthLoginReq;
+
+  userStore.oauthLogin(data).then((res) => {
+    window.$message?.success("登录成功");
+
+    userStore.getUserInfo().then((res) => {
+      if (userStore.userInfo.email === "") {
+        window.$message?.warning("请绑定邮箱以便及时收到回复");
       }
-    );
-  } else if (route.path == "/oauth/login/gitee") {
-    giteeLogin({ code: route.query.code as string }).then(
-      async ({ data }) => {
-        if (data.flag) {
-          // 设置Token
-          setToken(data.data);
-          // 获取用户信息
-          await user.GetUserInfo();
-          if (user.email === "") {
-            window.$message?.warning("请绑定邮箱以便及时收到回复");
-          } else {
-            window.$message?.success("登录成功");
-          }
-        }
-      }
-    );
-  } else if (route.path == "/oauth/login/github") {
-    githubLogin({ code: route.query.code as string }).then(
-      async ({ data }) => {
-        if (data.flag) {
-          // 设置Token
-          setToken(data.data);
-          // 获取用户信息
-          await user.GetUserInfo();
-          if (user.email === "") {
-            window.$message?.warning("请绑定邮箱以便及时收到回复");
-          } else {
-            window.$message?.success("登录成功");
-          }
-        }
-      }
-    );
-  }
-  // 跳转回原页面
-  const loginUrl = user.path;
-  if (loginUrl != null && loginUrl != "") {
-    router.push(loginUrl);
-  } else {
-    router.push("/");
-  }
+    });
+
+    // 跳转回原页面
+    const loginUrl = data.state;
+    if (loginUrl != null && loginUrl != "") {
+      router.push(loginUrl);
+    } else {
+      router.push("/");
+    }
+  });
 });
 </script>
 

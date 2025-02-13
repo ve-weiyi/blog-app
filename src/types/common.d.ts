@@ -1,3 +1,3 @@
 declare namespace CommonType {
-	type YesOrNo = 'Y' | 'N';
+  type YesOrNo = "Y" | "N";
 }

@@ -1,6 +1,12 @@
 <template>
-  <n-modal class="dialog-wrapper bg" v-model:show="dialogVisible" preset="dialog" :show-icon="false"
-    transform-origin="center" :block-scroll="false">
+  <n-modal
+    v-model:show="dialogVisible"
+    class="dialog-wrapper bg"
+    preset="dialog"
+    :show-icon="false"
+    transform-origin="center"
+    :block-scroll="false"
+  >
     <template #header>
       <span class="title">本地搜索</span>
     </template>
@@ -9,23 +15,23 @@
       <label for="search">
         <svg-icon icon-class="search"></svg-icon>
       </label>
-      <input id="search" placeholder="输入文章标题或内容..." v-model="keyword" />
+      <input id="search" v-model="keyword" placeholder="输入文章标题或内容..." />
     </div>
     <!-- 搜索结果 -->
     <div class="search-result-wrapper">
       <hr class="divider" />
       <ul v-if="articleList.length">
-        <li class="search-result" v-for="article in articleList" :key="article.id">
+        <li v-for="article in articleList" :key="article.id" class="search-result">
           <!-- 文章标题 -->
           <router-link class="search-title" :to="`/article/${article.id}`">
-            <span @click="dialogVisible = false" v-html="article.articleTitle"></span>
+            <span @click="dialogVisible = false" v-html="article.article_title"></span>
           </router-link>
           <!-- 文章内容 -->
-          <p class="search-content" v-html="article.articleContent"></p>
+          <p class="search-content" v-html="article.article_content"></p>
         </li>
       </ul>
       <!-- 搜索结果不存在提示 -->
-      <div v-else-if="keyword" class="colorFlag" style="font-size: 0.875rem;margin-top: 1rem;">
+      <div v-else-if="keyword" class="colorFlag" style="font-size: 0.875rem; margin-top: 1rem">
         找不到您查询的内容：{{ keyword }}
       </div>
     </div>
@@ -33,27 +39,30 @@
 </template>
 
 <script setup lang="ts">
-import { searchArticle } from "@/api/article";
-import { ArticleSearch } from "@/api/article/types";
+import { findArticleHomeListApi } from "@/api/article";
 import { useAppStore } from "@/store";
 import { debouncedWatch } from "@vueuse/core";
-const app = useAppStore();
+import { ArticleHome, ArticleHomeQueryReq } from "@/api/types";
+
+const appStore = useAppStore();
 const dialogVisible = computed({
-  get: () => app.searchFlag,
-  set: (value) => app.searchFlag = value,
+  get: () => appStore.searchFlag,
+  set: (value) => (appStore.searchFlag = value),
 });
 const keyword = ref("");
-const articleList = ref<ArticleSearch[]>([]);
-debouncedWatch(
-  keyword,
-  () => keyword.value ? handleSearch() : articleList.value = [],
-  { debounce: 300 },
-);
+const articleList = ref<ArticleHome[]>([]);
+debouncedWatch(keyword, () => (keyword.value ? handleSearch() : (articleList.value = [])), {
+  debounce: 300,
+});
 const handleSearch = () => {
-  searchArticle(keyword.value).then(({ data }) => {
-    articleList.value = data.data;
-  })
-}
+  const data: ArticleHomeQueryReq = {
+    article_title: keyword.value,
+  };
+
+  findArticleHomeListApi(data).then((res) => {
+    articleList.value = res.data.list;
+  });
+};
 </script>
 
 <style scoped>

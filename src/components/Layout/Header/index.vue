@@ -7,10 +7,18 @@
     <!-- 右侧按钮 -->
     <ul class="right">
       <li class="item">
-        <svg-icon style="cursor: pointer;" :icon-class="isDark ? 'moon' : 'sun'" @click="toggle()"></svg-icon>
+        <svg-icon
+          style="cursor: pointer"
+          :icon-class="isDark ? 'moon' : 'sun'"
+          @click="toggle()"
+        ></svg-icon>
       </li>
       <li class="item">
-        <svg-icon style="cursor: pointer;" icon-class="search" @click="app.searchFlag = true"></svg-icon>
+        <svg-icon
+          style="cursor: pointer"
+          icon-class="search"
+          @click="appStore.searchFlag = true"
+        ></svg-icon>
       </li>
     </ul>
   </header>
@@ -19,14 +27,15 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store";
 import { useDark, useScroll, useToggle } from "@vueuse/core";
-const app = useAppStore();
+
+const appStore = useAppStore();
 const { y } = useScroll(window);
 const isDark = useDark({
-  selector: 'html',
-  attribute: 'theme',
-  valueDark: 'dark',
-  valueLight: 'light',
-})
+  selector: "html",
+  attribute: "theme",
+  valueDark: "dark",
+  valueLight: "light",
+});
 const toggle = useToggle(isDark);
 const fixedClass = ref("");
 watch(y, (newValue, oldValue) => {
@@ -81,7 +90,6 @@ watch(y, (newValue, oldValue) => {
 
   .item {
     padding: 0.625rem 0.5rem;
-
   }
 }
 
@@ -89,6 +97,5 @@ watch(y, (newValue, oldValue) => {
   .header-wrapper {
     padding: 0;
   }
-
 }
 </style>

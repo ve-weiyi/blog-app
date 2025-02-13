@@ -1,17 +1,18 @@
 <template>
-  <div ref="chartDom" :style="{ 'width': width, 'height': height }"></div>
+  <div ref="chartDom" :style="{ width: width, height: height }"></div>
 </template>
 
 <script setup lang="ts">
 import { useResizeObserver } from "@vueuse/core";
 import * as echarts from "echarts";
+
 const chartDom = ref<HTMLElement>();
 const myChart = ref<echarts.EChartsType>();
 const props = defineProps({
   options: {
     type: Object,
     default: {},
-    required: true
+    required: true,
   },
   width: {
     type: String,
@@ -37,7 +38,7 @@ onMounted(() => {
   useResizeObserver(chartDom.value, () => {
     myChart.value?.resize();
   });
-})
+});
 </script>
 
 <style scoped></style>

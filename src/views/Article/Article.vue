@@ -1,57 +1,72 @@
 <template>
-  <div class="page-header" v-if="article">
+  <div v-if="article" class="page-header">
     <div class="page-title">
-      <h1 class="article-title">{{ article.articleTitle }}</h1>
+      <h1 class="article-title">{{ article.article_title }}</h1>
       <div class="article-meta">
         <div class="first-meta">
-          <span><svg-icon icon-class="calendar" style="margin-right:0.15rem;"></svg-icon>
-            <span class="text">发表于 </span>{{ formatDate(article.createTime) }}
+          <span>
+            <svg-icon icon-class="calendar" style="margin-right: 0.15rem"></svg-icon>
+            <span class="text">发表于 </span>{{ formatDate(article.created_at) }}
           </span>
-          <span class="item" v-if="article.updateTime"><svg-icon icon-class="update"
-              style="margin-right:0.15rem;"></svg-icon>
-            <span class="text">更新于 </span>{{ formatDate(article.updateTime) }}
+          <span v-if="article.updated_at" class="item">
+            <svg-icon icon-class="update" style="margin-right: 0.15rem"></svg-icon>
+            <span class="text">更新于 </span>{{ formatDate(article.updated_at) }}
           </span>
-          <span class="item"><svg-icon icon-class="eye" style="margin-right:0.15rem;"></svg-icon>
-            <span class="text">阅读量 </span>{{ article.viewCount }}</span>
+          <span class="item">
+            <svg-icon icon-class="eye" style="margin-right: 0.15rem"></svg-icon>
+            <span class="text">阅读量 </span>{{ article.views_count }}</span
+          >
         </div>
         <div class="second-meta">
-          <span><svg-icon icon-class="edit" size="0.9rem" style="margin-right:0.15rem;"></svg-icon>
+          <span>
+            <svg-icon icon-class="edit" size="0.9rem" style="margin-right: 0.15rem"></svg-icon>
             <span class="text">字数统计 </span>{{ count(wordNum) }} 字
           </span>
-          <span class="item"><svg-icon icon-class="clock" style="margin-right:0.15rem;"></svg-icon>
+          <span class="item">
+            <svg-icon icon-class="clock" style="margin-right: 0.15rem"></svg-icon>
             <span class="text">阅读时长 </span>{{ readTime }} 分钟
           </span>
           <span class="item">
-            <svg-icon icon-class="category" style="margin-right:0.15rem;"></svg-icon>{{
-              article.category.categoryName
-            }}
+            <svg-icon icon-class="category" style="margin-right: 0.15rem"></svg-icon>
+            {{ article.category_name }}
           </span>
         </div>
       </div>
     </div>
-    <img class="page-cover" :src="article.articleCover" alt="">
+    <img class="page-cover" :src="article.article_cover" alt="" />
     <!-- 波浪 -->
     <Waves></Waves>
   </div>
   <div class="bg">
-    <div class="main-container" v-if="article">
-      <div class="left-container" :class="app.sideFlag ? 'w-full' : ''">
+    <div v-if="article" class="main-container">
+      <div class="left-container" :class="appStore.sideFlag ? 'w-full' : ''">
         <div class="article-container">
-          <v-md-preview ref="articleRef" class="md" v-viewer :text="article.articleContent"></v-md-preview>
+          <v-md-preview
+            ref="articleRef"
+            v-viewer
+            class="md"
+            :text="article.article_content"
+          ></v-md-preview>
           <div class="article-post">
             <div class="tag-share">
-              <router-link :to="`/tag/${tag.id}`" class="article-tag" v-for="tag in article.tagVOList" :key="tag.id">
+              <router-link
+                v-for="tag in article.tag_name_list"
+                :key="tag"
+                :to="`/tag/${tag}`"
+                class="article-tag"
+              >
                 <svg-icon icon-class="tag" size="0.8rem"></svg-icon>
-                {{ tag.tagName }}
+                {{ tag }}
               </router-link>
-              <Share class="share-info" :url="articleHref" :title="article.articleTitle"></Share>
+              <Share class="share-info" :url="articleHref" :title="article.article_title"></Share>
             </div>
             <div class="reward">
               <button class="btn" :class="isLike(article.id)" @click="like">
-                <svg-icon icon-class="like" size="0.9rem"></svg-icon> 点赞
-                <span>{{ article.likeCount }}</span>
+                <svg-icon icon-class="like" size="0.9rem"></svg-icon>
+                点赞
+                <span>{{ article.like_count }}</span>
               </button>
-              <n-popover trigger="click" v-if="blog.blogInfo.siteConfig.isReward">
+              <n-popover v-if="blogStore.blogInfo.website_config.is_reward" trigger="click">
                 <template #trigger>
                   <button class="btn reward-btn">
                     <svg-icon icon-class="qr_code" size="0.9rem"></svg-icon>
@@ -60,51 +75,80 @@
                 </template>
                 <div class="reward-all">
                   <span>
-                    <img class="reward-img" v-lazy="blog.blogInfo.siteConfig.weiXinCode" />
+                    <img
+                      v-lazy="blogStore.blogInfo.website_config.weixin_qr_code"
+                      class="reward-img"
+                    />
                     <div class="reward-desc">微信</div>
                   </span>
-                  <span style="margin-left: 0.3rem;">
-                    <img class="reward-img" v-lazy="blog.blogInfo.siteConfig.aliCode" />
+                  <span style="margin-left: 0.3rem">
+                    <img
+                      v-lazy="blogStore.blogInfo.website_config.alipay_qr_code"
+                      class="reward-img"
+                    />
                     <div class="reward-desc">支付宝</div>
                   </span>
                 </div>
               </n-popover>
-              <p class="tea" v-if="blog.blogInfo.siteConfig.isReward">请我喝[茶]~(￣▽￣)~*</p>
+              <p v-if="blogStore.blogInfo.website_config.is_reward" class="tea">
+                请我喝[茶]~(￣▽￣)~*
+              </p>
             </div>
             <div class="copyright">
               <ul>
                 <li class="author">
-                  <svg-icon icon-class="author" size="0.9rem" style="margin-right:0.3rem"></svg-icon>
-                  <strong>本文作者： </strong>{{ blog.blogInfo.siteConfig.siteAuthor }}
+                  <svg-icon
+                    icon-class="author"
+                    size="0.9rem"
+                    style="margin-right: 0.3rem"
+                  ></svg-icon>
+                  <strong>本文作者： </strong>{{ blogStore.blogInfo.website_config.website_author }}
                 </li>
                 <li class="link">
-                  <svg-icon icon-class="article_link" size="0.9rem" style="margin-right:0.3rem"></svg-icon>
+                  <svg-icon
+                    icon-class="article_link"
+                    size="0.9rem"
+                    style="margin-right: 0.3rem"
+                  ></svg-icon>
                   <strong>本文链接：</strong>
                   <a :href="articleHref">{{ articleHref }}</a>
                 </li>
                 <li class="license">
-                  <svg-icon icon-class="article_share" size="0.8rem" style="margin-right:0.3rem"></svg-icon>
+                  <svg-icon
+                    icon-class="article_share"
+                    size="0.8rem"
+                    style="margin-right: 0.3rem"
+                  ></svg-icon>
                   <strong>版权声明： </strong>本站所有文章除特别声明外，均采用
-                  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank">CC
-                    BY-NC-SA 4.0</a>
+                  <a
+                    href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh"
+                    target="_blank"
+                    >CC BY-NC-SA 4.0</a
+                  >
                   许可协议。转载请注明文章出处！
                 </li>
               </ul>
             </div>
             <!-- 上下文 -->
             <div class="post-nav">
-              <div class="item" v-if="article.lastArticle">
-                <router-link :to="`/article/${article.lastArticle?.id}`" class="post-cover"
-                  :style="articleCover(article.lastArticle.articleCover)">
+              <div v-if="article.last_article" class="item">
+                <router-link
+                  :to="`/article/${article.last_article?.id}`"
+                  class="post-cover"
+                  :style="articleCover(article.last_article.article_cover)"
+                >
                   <span class="post-last-next">上一篇</span>
-                  <h3 class="post-title">{{ article.lastArticle.articleTitle }}</h3>
+                  <h3 class="post-title">{{ article.last_article.article_title }}</h3>
                 </router-link>
               </div>
-              <div class="item" v-if="article.nextArticle">
-                <router-link :to="`/article/${article.nextArticle?.id}`" class="post-cover"
-                  :style="articleCover(article.nextArticle.articleCover)">
+              <div v-if="article.next_article" class="item">
+                <router-link
+                  :to="`/article/${article.next_article?.id}`"
+                  class="post-cover"
+                  :style="articleCover(article.next_article.article_cover)"
+                >
                   <span class="post-last-next">下一篇</span>
-                  <h3 class="post-title">{{ article.nextArticle.articleTitle }}</h3>
+                  <h3 class="post-title">{{ article.next_article.article_title }}</h3>
                 </router-link>
               </div>
             </div>
@@ -112,7 +156,7 @@
           </div>
         </div>
       </div>
-      <div class="right-container" :class="app.sideFlag ? 'hidden' : ''">
+      <div class="right-container" :class="appStore.sideFlag ? 'hidden' : ''">
         <div class="side-card">
           <Catalog v-if="articleLoaded" :domRef="articleRef"></Catalog>
         </div>
@@ -122,16 +166,16 @@
 </template>
 
 <script setup lang="ts">
-import { getArticle, likeArticle } from "@/api/article";
-import { ArticleInfo, ArticlePagination } from "@/api/article/types";
-import { CategoryVO } from "@/api/category/types";
+import { getArticleDetailsApi, likeArticleApi } from "@/api/article";
+import { ArticleDetails } from "@/api/types";
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
 import { formatDate } from "@/utils/date";
-import { Share } from 'vue3-social-share';
-import 'vue3-social-share/lib/index.css';
-const user = useUserStore();
-const app = useAppStore();
-const blog = useBlogStore();
+import { Share } from "vue3-social-share";
+import "vue3-social-share/lib/index.css";
+
+const userStore = useUserStore();
+const appStore = useAppStore();
+const blogStore = useBlogStore();
 const articleRef = ref();
 const route = useRoute();
 const articleHref = window.location.href;
@@ -140,25 +184,13 @@ const data = reactive({
   wordNum: 0,
   readTime: 0,
   commentType: 1,
-  article: {
-    id: 0,
-    articleCover: "",
-    articleTitle: "",
-    articleContent: "",
-    articleType: 0,
-    viewCount: 0,
-    likeCount: 0,
-    category: {} as CategoryVO,
-    tagVOList: [],
-    createTime: "",
-    lastArticle: {} as ArticlePagination,
-    nextArticle: {} as ArticlePagination,
-    updateTime: ""
-  } as ArticleInfo,
+  article: {} as ArticleDetails,
 });
 const { articleLoaded, wordNum, readTime, commentType, article } = toRefs(data);
-const articleCover = computed(() => (cover: string) => 'background-image:url(' + cover + ')');
-const isLike = computed(() => (id: number) => user.articleLikeSet.indexOf(id) != -1 ? "like-btn-active" : "like-btn");
+const articleCover = computed(() => (cover: string) => "background-image:url(" + cover + ")");
+const isLike = computed(
+  () => (id: number) => (userStore.isArticleLike(id) ? "like-btn-active" : "like-btn")
+);
 const count = (value: number) => {
   if (value >= 1000) {
     return (value / 1000).toFixed(1) + "k";
@@ -172,36 +204,37 @@ const deleteHTMLTag = (content: string) => {
     .replace(/&npsp;/gi, "");
 };
 const like = () => {
-  if (!user.id) {
-    app.setLoginFlag(true);
+  if (!userStore.isLogin()) {
+    appStore.setLoginFlag(true);
     return;
   }
   let id = article.value.id;
-  likeArticle(id).then(({ data }) => {
-    if (data.flag) {
-      //判断是否点赞
-      if (user.articleLikeSet.indexOf(id) != -1) {
-        article.value.likeCount -= 1;
-      } else {
-        article.value.likeCount += 1;
-      }
-      user.articleLike(id);
+  likeArticleApi({ id }).then((res) => {
+    //判断是否点赞
+    if (userStore.isArticleLike(id)) {
+      window.$message?.error("取消点赞成功");
+      article.value.like_count--;
+    } else {
+      window.$message?.success("点赞成功");
+      article.value.like_count++;
     }
+    userStore.articleLike(id);
   });
 };
 onMounted(() => {
-  getArticle(Number(route.params.id)).then(({ data }) => {
-    article.value = data.data;
-    document.title = article.value.articleTitle;
-    wordNum.value = deleteHTMLTag(article.value.articleContent).length;
+  const id = Number(route.params.id);
+  getArticleDetailsApi({ id }).then((res) => {
+    article.value = res.data;
+    document.title = article.value.article_title;
+    wordNum.value = deleteHTMLTag(article.value.article_content).length;
     readTime.value = Math.round(wordNum.value / 400);
     articleLoaded.value = true;
-  })
-})
+  });
+});
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
+@use "@/assets/styles/mixin.scss" as *;
 
 .article-container {
   border-radius: 0.5rem;
@@ -367,6 +400,5 @@ onMounted(() => {
     width: 105px;
     height: 105px;
   }
-
 }
 </style>

@@ -5,4 +5,3 @@ import setupMdPreview from "./mdPreivew";
 import setupViewer from "./viewer";
 
 export { setupAssets, setupLazy, setupMasonry, setupMdPreview, setupViewer };
-

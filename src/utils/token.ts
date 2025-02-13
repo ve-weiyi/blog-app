@@ -1,26 +1,35 @@
-import Cookies from "js-cookie";
+export function clearStorage() {
+  localStorage.clear();
+}
 
 const TokenKey: string = "Token";
 
-// 我网站的域名是www.ttkwsd.top，去前面的www，改成自己的域名
-const domain: string = ".ttkwsd.top";
-
-// token前缀
-export let token_prefix = "Bearer ";
-
 export function getToken() {
-  return Cookies.get(TokenKey);
+  return localStorage.getItem(TokenKey);
 }
 
 // 本地运行记得删除domain
 export function setToken(token: string) {
   // 项目线上部署可以取消注释
-  return Cookies.set(TokenKey, token, { domain: domain });
-  // return Cookies.set(TokenKey, token);
+  return localStorage.setItem(TokenKey, token);
 }
 
-export function removeToken() {
-  // 项目线上部署可以取消注释
-  return Cookies.remove(TokenKey, { domain: domain });
-  // return Cookies.remove(TokenKey);
+const UidKey: string = "Uid";
+
+export function getUid() {
+  return localStorage.getItem(UidKey);
+}
+
+export function setUid(uid: string) {
+  return localStorage.setItem(UidKey, uid);
+}
+
+const TerminalIdKey: string = "TerminalId";
+
+export function getTerminalId() {
+  return localStorage.getItem(TerminalIdKey);
+}
+
+export function setTerminalId(tid: string) {
+  return localStorage.setItem(TerminalIdKey, tid);
 }

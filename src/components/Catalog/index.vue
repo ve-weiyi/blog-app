@@ -4,16 +4,21 @@
     目录
   </div>
   <div class="catalog-content">
-    <div class="catalog-item" v-for="(anchor, index) of titleList" :key="anchor.title"
-      :class="currentIndex === index ? 'active' : ''" :style="{ paddingLeft: `${5 + anchor.indent * 15}px` }"
-      @click="handleAnchorClick(anchor, index)">
+    <div
+      v-for="(anchor, index) of titleList"
+      :key="anchor.title"
+      class="catalog-item"
+      :class="currentIndex === index ? 'active' : ''"
+      :style="{ paddingLeft: `${5 + anchor.indent * 15}px` }"
+      @click="handleAnchorClick(anchor, index)"
+    >
       <a> {{ anchor.title }} </a>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useScroll, watchThrottled } from '@vueuse/core';
+import { useScroll, watchThrottled } from "@vueuse/core";
 
 const titleList = ref<any>([]);
 const currentIndex = ref(0);
@@ -21,51 +26,58 @@ const props = defineProps({
   domRef: {
     type: Object,
     default: null,
-  }
+  },
 });
 
 const getTitles = () => {
-  const anchors = props.domRef.$el.querySelectorAll('h1,h2,h3')
-  const titles = Array.from(anchors).filter((t: any) => !!t.innerText.trim())
-  if (!titles.length)
-    titleList.value = []
-  const hTags = Array.from(new Set(titles.map((t: any) => t.tagName))).sort()
+  const anchors = props.domRef.$el.querySelectorAll("h1,h2,h3");
+  const titles = Array.from(anchors).filter((t: any) => !!t.innerText.trim());
+  if (!titles.length) {
+    titleList.value = [];
+  }
+  const hTags = Array.from(new Set(titles.map((t: any) => t.tagName))).sort();
   titleList.value = titles.map((el: any, idx: number) => {
     return {
       title: el.innerText,
-      lineIndex: el.getAttribute('data-v-md-line'),
+      lineIndex: el.getAttribute("data-v-md-line"),
       indent: hTags.indexOf(el.tagName),
-    }
-  })
-}
+    };
+  });
+};
 
 // 点击锚点目录
 function handleAnchorClick(anchor: any, idx: number) {
-  const heading = props.domRef.$el.querySelector(`[data-v-md-line="${anchor.lineIndex}"]`)
+  const heading = props.domRef.$el.querySelector(`[data-v-md-line="${anchor.lineIndex}"]`);
   // const heading = preview.querySelector(`#${anchor.title}`)
   if (heading) {
     window.scrollTo({
-      behavior: 'smooth',
+      behavior: "smooth",
       top: heading.offsetTop - 40,
-    })
-    setTimeout(() => currentIndex.value = idx, 600)
+    });
+    setTimeout(() => (currentIndex.value = idx), 600);
   }
 }
 
 // * 实现目录高亮当前位置的标题
 // 思路: 循环的方式将标题距离顶部距离与滚动条当前位置对比, 来确定高亮的标题
-const { y } = useScroll(window)
-watchThrottled(y, () => {
-  titleList.value.forEach((e: any, idx: number) => {
-    const heading = props.domRef.$el.querySelector(`[data-v-md-line="${e.lineIndex}"]`)
-    if (y.value >= heading.offsetTop - 50) // 比 40 稍微多一点
-      currentIndex.value = idx
-  })
-}, { throttle: 200 })
+const { y } = useScroll(window);
+watchThrottled(
+  y,
+  () => {
+    titleList.value.forEach((e: any, idx: number) => {
+      const heading = props.domRef.$el.querySelector(`[data-v-md-line="${e.lineIndex}"]`);
+      if (y.value >= heading.offsetTop - 50) {
+        // 比 40 稍微多一点
+        currentIndex.value = idx;
+      }
+    });
+  },
+  { throttle: 200 }
+);
 onMounted(() => {
   nextTick(() => {
     getTitles();
-  })
+  });
 });
 </script>
 

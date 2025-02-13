@@ -1,4 +1,3 @@
-
 import { createApp } from "vue";
 import App from "./App.vue";
 import { setupDirectives } from "./directives";
@@ -7,25 +6,25 @@ import { setupRouter } from "./router";
 import { setupStore } from "./store";
 
 async function setupApp() {
-	setupAssets();
+  setupAssets();
 
-	const app = createApp(App);
+  const app = createApp(App);
 
-	setupStore(app);
+  setupStore(app);
 
   setupDirectives(app);
 
-	setupLazy(app);
+  setupLazy(app);
 
-	setupMdPreview(app);
+  setupMdPreview(app);
 
-	setupMasonry(app);
+  setupMasonry(app);
 
-	setupViewer(app);
+  setupViewer(app);
 
-	await setupRouter(app);
+  await setupRouter(app);
 
-	app.mount("#app");
+  app.mount("#app");
 }
 
 setupApp();

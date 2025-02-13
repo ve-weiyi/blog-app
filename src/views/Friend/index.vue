@@ -1,7 +1,7 @@
 <template>
   <div class="page-header">
     <h1 class="page-title">友情链接</h1>
-    <img class="page-cover" src="https://static.ttkwsd.top/config/c8049b9b880411ebb6edd017c2d2eca2.jpg" alt="" />
+    <img class="page-cover" :src="cover" alt="" />
     <!-- 波浪 -->
     <Waves></Waves>
   </div>
@@ -12,9 +12,9 @@
         本站信息
       </h2>
       <blockquote class="block">
-        <p>名称：{{ blog.blogInfo.siteConfig.siteName }}</p>
-        <p>简介：{{ blog.blogInfo.siteConfig.siteIntro }}</p>
-        <p>头像：{{ blog.blogInfo.siteConfig.authorAvatar }}</p>
+        <p>名称：{{ blogStore.blogInfo.website_config.website_name }}</p>
+        <p>简介：{{ blogStore.blogInfo.website_config.website_intro }}</p>
+        <p>头像：{{ blogStore.blogInfo.website_config.website_avatar }}</p>
       </blockquote>
       <h2>
         <svg-icon class="flower" icon-class="flower" size="1.25rem" color="pink"></svg-icon>
@@ -29,15 +29,25 @@
         小伙伴们
       </h2>
       <div class="friends">
-        <div class="friend-item" v-animate="['slideUpBigIn']" v-for="friend in friendList" :key="friend.id">
-          <a target="_blank" :href="friend.url">
-            <img class="image" v-lazy="friend.avatar" />
+        <div
+          v-for="friend in friendList"
+          :key="friend.id"
+          v-animate="['slideUpBigIn']"
+          class="friend-item"
+        >
+          <a target="_blank" :href="friend.link_address">
+            <img v-lazy="friend.link_avatar" class="image" />
           </a>
           <div class="info">
-            <a class="name" target="_blank" :href="friend.url" :style="{ color: friend.color }">{{
-              friend.name
-            }}</a>
-            <p class="desc">{{ friend.introduction }}</p>
+            <a
+              class="name"
+              target="_blank"
+              :href="friend.link_address"
+              :style="{ color: '0xffffff' }"
+            >
+              {{ friend.link_name }}
+            </a>
+            <p class="desc">{{ friend.link_intro }}</p>
           </div>
         </div>
       </div>
@@ -47,15 +57,19 @@
 </template>
 
 <script setup lang="ts">
-import { getFriendList } from "@/api/friend";
-import { Friend } from "@/api/friend/types";
+import { findFriendListApi } from "@/api/friend";
+import { Friend } from "@/api/types";
 import { useBlogStore } from "@/store";
-const blog = useBlogStore();
+
+const blogStore = useBlogStore();
+
+const cover = blogStore.getCover("friend");
+
 const commentType = ref(2);
 const friendList = ref<Friend[]>([]);
 onMounted(() => {
-  getFriendList().then(({ data }) => {
-    friendList.value = data.data;
+  findFriendListApi().then((res) => {
+    friendList.value = res.data.list;
   });
 });
 </script>

@@ -1,30 +1,33 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
 node_modules
 .DS_Store
 dist
 dist-ssr
-coverage
 *.local
+coverage
+stats.html
 
-/cypress/videos/
-/cypress/screenshots/
+# 包管理器
+# package-lock.json
+# yarn.lock
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# 日志
+logs
+*.log
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+ppnpm-debug.log*
+lerna-debug.log*
 
-*.tsbuildinfo
+# 压缩包
+*.zip
+*.rar
+*.7z
+*.tar
+
+# 全局组件声明
+# 每次启动服务或打包都会生成最新的，所以无需传到 Git 上
+components.d.ts
+/.idea/
+/blog/
+/.eslintrc-auto-import.json

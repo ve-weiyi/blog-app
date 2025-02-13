@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { useDialog, useMessage, useNotification } from "naive-ui";
-import { defineComponent, h } from 'vue';
+import { defineComponent, h } from "vue";
 
 const registerNaiveTools = () => {
   window.$dialog = useDialog();
@@ -19,13 +19,13 @@ const registerNaiveTools = () => {
   window.$notification = useNotification();
 };
 const NaiveProviderContent = defineComponent({
-  name: 'NaiveProviderContent',
+  name: "NaiveProviderContent",
   setup() {
     registerNaiveTools();
   },
   render() {
-    return h('div');
-  }
+    return h("div");
+  },
 });
 </script>
 <style scoped></style>

@@ -2,41 +2,59 @@
   <div class="menu">
     <div class="menu-item title">
       <router-link to="/" class="menu-btn">
-        {{ blog.blogInfo.siteConfig.siteName }}
+        {{ blogStore.blogInfo.website_config.website_name }}
       </router-link>
     </div>
     <template v-for="menu of menuList" :key="menu.name">
-      <div v-if="!menu.children" class="menu-item" :class="{ active: route.meta.title === menu.name }">
+      <div
+        v-if="!menu.children"
+        class="menu-item"
+        :class="{ active: route.meta.title === menu.name }"
+      >
         <router-link :to="menu.path" class="menu-btn">
-          <svg-icon :icon-class="menu.icon"></svg-icon> {{ menu.name }}
+          <svg-icon :icon-class="menu.icon"></svg-icon>
+          {{ menu.name }}
         </router-link>
       </div>
       <div v-else class="menu-item dropdown">
-        <a class="menu-btn drop"> <svg-icon :icon-class="menu.icon"></svg-icon> {{ menu.name }} </a>
+        <a class="menu-btn drop">
+          <svg-icon :icon-class="menu.icon"></svg-icon>
+          {{ menu.name }}
+        </a>
         <ul class="submenu">
-          <li class="subitem" v-for="submenu of menu.children" :key="submenu.name"
-            :class="{ active: route.meta.title === submenu.name }">
+          <li
+            v-for="submenu of menu.children"
+            :key="submenu.name"
+            class="subitem"
+            :class="{ active: route.meta.title === submenu.name }"
+          >
             <router-link class="link" :to="submenu.path">
-              <svg-icon :icon-class="submenu.icon"></svg-icon> {{ submenu.name }}
+              <svg-icon :icon-class="submenu.icon"></svg-icon>
+              {{ submenu.name }}
             </router-link>
           </li>
         </ul>
       </div>
     </template>
     <div class="menu-item">
-      <a v-if="!user.id" @click="app.loginFlag = true" class="menu-btn">
-        <svg-icon icon-class="user"></svg-icon> 登录
+      <a v-if="!userStore.userInfo.user_id" class="menu-btn" @click="appStore.loginFlag = true">
+        <svg-icon icon-class="user"></svg-icon>
+        登录
       </a>
       <template v-else>
-        <img class="user-avatar drop" :src="user.avatar" />
+        <img class="user-avatar" :src="userStore.userInfo.avatar" />
         <ul class="submenu">
           <li class="subitem" :class="{ active: route.meta.title === '个人中心' }">
             <router-link to="/user" class="link">
-              <svg-icon icon-class="author"></svg-icon> 个人中心
+              <svg-icon icon-class="author"></svg-icon>
+              个人中心
             </router-link>
           </li>
           <li class="subitem">
-            <a class="link" @click="logout"><svg-icon icon-class="logout"></svg-icon> 退出 </a>
+            <a class="link" @click="logout">
+              <svg-icon icon-class="logout"></svg-icon>
+              退出
+            </a>
           </li>
         </ul>
       </template>
@@ -46,16 +64,17 @@
 
 <script setup lang="ts">
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
-const user = useUserStore();
-const app = useAppStore();
-const blog = useBlogStore();
+
+const userStore = useUserStore();
+const appStore = useAppStore();
+const blogStore = useBlogStore();
 const router = useRouter();
 const route = useRoute();
 const menuList = [
   {
     name: "首页",
     icon: "home",
-    path: "/"
+    path: "/",
   },
   {
     name: "文章",
@@ -64,19 +83,19 @@ const menuList = [
       {
         name: "归档",
         icon: "archives",
-        path: "/archive"
+        path: "/archive",
       },
       {
         name: "分类",
         icon: "category",
-        path: "/category"
+        path: "/category",
       },
       {
         name: "标签",
         icon: "tag",
-        path: "/tag"
+        path: "/tag",
       },
-    ]
+    ],
   },
   {
     name: "娱乐",
@@ -85,41 +104,41 @@ const menuList = [
       {
         name: "说说",
         icon: "talk",
-        path: "/talk"
+        path: "/talk",
       },
       {
         name: "相册",
         icon: "album",
-        path: "/album"
+        path: "/album",
       },
       {
         name: "图床",
         icon: "upload",
-        path: "/picture"
+        path: "/picture",
       },
-    ]
+    ],
   },
   {
     name: "友链",
     icon: "friend",
-    path: "/friend"
+    path: "/friend",
   },
   {
     name: "留言板",
     icon: "message",
-    path: "/message"
+    path: "/message",
   },
   {
     name: "关于",
     icon: "plane",
-    path: "/about"
+    path: "/about",
   },
 ];
 const logout = () => {
   if (route.path == "/user") {
     router.go(-1);
   }
-  user.LogOut();
+  userStore.logout();
   window.$message?.success("退出成功");
 };
 </script>

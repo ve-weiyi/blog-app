@@ -1,14 +1,14 @@
 <template>
   <div class="page-header">
-    <h1 class="page-title">{{ photoInfo.albumName }}</h1>
-    <img class="page-cover" src="https://static.ttkwsd.top/config/0639b8855aab4dcbb827a9884e8ec57d.jpg" alt="">
+    <h1 class="page-title">{{ albumInfo.album_name }}</h1>
+    <img class="page-cover" :src="cover" alt="" />
     <Waves></Waves>
   </div>
   <div class="bg">
     <div class="page-container">
       <div v-viewer v-masonry fit-width="true" transition-duration="0.3s" item-selector=".card">
-        <div v-masonry-tile class="card" v-for="photo in photoInfo.photoVOList" :key="photo.id">
-          <img class="img" :src="photo.photoUrl" alt="">
+        <div v-for="photo in photoList" :key="photo.id" v-masonry-tile class="card">
+          <img class="img" :src="photo.photo_url" alt="" />
         </div>
       </div>
     </div>
@@ -16,19 +16,34 @@
 </template>
 
 <script setup lang="ts">
-import { getPhotoList } from '@/api/album';
-import { Photo, PhotoInfo } from '@/api/album/types';
+import { findPhotoListApi, getAlbumApi } from "@/api/album";
+import { Album, Photo } from "@/api/types";
+import { useBlogStore } from "@/store";
+
+const blogStore = useBlogStore();
+
+const cover = blogStore.getCover("photo");
 
 const route = useRoute();
-const photoInfo = ref<PhotoInfo>({
-  albumName: "",
-  photoVOList: [] as Photo[],
+const albumInfo = ref<Album>({
+  id: 0,
+  album_name: "",
+  album_desc: "",
+  album_cover: "",
 });
+const photoList = ref<Photo[]>([]);
+
 onMounted(() => {
-  getPhotoList(Number(route.params.albumId)).then(({ data }) => {
-    photoInfo.value = data.data;
-  })
-})
+  const albumId = Number(route.params.albumId);
+
+  getAlbumApi({ id: albumId }).then((res) => {
+    albumInfo.value = res.data;
+  });
+
+  findPhotoListApi({ album_id: albumId }).then((res) => {
+    photoList.value = res.data.list;
+  });
+});
 </script>
 
 <style lang="scss" scoped>

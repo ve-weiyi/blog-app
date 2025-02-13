@@ -34,14 +34,28 @@
 	}
 }
 
-@keyframes titleScale {
+@keyframes header-effect {
 	0% {
 		opacity: 0;
-		transform: scale(0.7);
+		filter: alpha(opacity=0);
+		transform: translateY(-50px);
 	}
-
 	100% {
 		opacity: 1;
+		filter: none;
+		transform: translateY(0);
+	}
+}
+
+@keyframes title-scale {
+	0% {
+		opacity: 0;
+		filter: alpha(opacity=0);
+		transform: scale(0.7);
+	}
+	100% {
+		opacity: 1;
+		filter: none;
 		transform: scale(1);
 	}
 }

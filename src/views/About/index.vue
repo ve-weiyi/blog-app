@@ -1,23 +1,37 @@
 <template>
   <div class="page-header">
     <h1 class="page-title">关于</h1>
-    <img class="page-cover" src="https://ik.imagekit.io/nicexl/Wallpaper/ba41a32b219e4b40ad055bbb52935896_Y0819msuI.jpg"
-      alt="" />
+    <img class="page-cover" :src="cover" alt="" />
     <Waves></Waves>
   </div>
   <div class="bg">
     <div class="page-container">
       <div class="avatar-box">
-        <img class="author-avatar" :src="blog.blogInfo.siteConfig.authorAvatar" />
+        <img class="author-avatar" :src="blogStore.blogInfo.website_config.website_avatar" />
       </div>
-      <v-md-preview class="md" :text="blog.blogInfo.siteConfig.aboutMe"></v-md-preview>
+      <v-md-preview class="md" :text="aboutContent"></v-md-preview>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useBlogStore } from "@/store";
-const blog = useBlogStore();
+import { getAboutMeApi } from "@/api/website";
+
+const blogStore = useBlogStore();
+
+const cover = blogStore.getCover("about");
+const aboutContent = ref("");
+
+const getAboutContent = () => {
+  getAboutMeApi().then((res) => {
+    aboutContent.value = res.data.content;
+  });
+};
+
+onMounted(() => {
+  getAboutContent();
+});
 </script>
 
 <style scoped>

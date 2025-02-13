@@ -1,4 +1,1 @@
-export * from "./config";
-export * from "./plugins";
-export * from "./utils";
-
+export * from "./plugins"

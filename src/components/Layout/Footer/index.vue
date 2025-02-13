@@ -1,12 +1,15 @@
 <template>
-  <footer class="footer-wrapper" v-if="!isMessage">
+  <footer v-if="!isMessage" class="footer-wrapper">
+    <li v-for="link in links" :key="link" style="display: inline; margin: 8px">
+      <a style="font-weight: 500; font-size: 16px">{{ link }}</a>
+    </li>
     <p>
-      © {{ formatDate(blog.blogInfo.siteConfig.createSiteTime, "YYYY") }} -
+      © {{ formatDate(blogStore.blogInfo.website_config.website_create_time, "YYYY") }} -
       {{ new Date().getFullYear() }} By
-      {{ blog.blogInfo.siteConfig.siteAuthor }}
+      {{ blogStore.blogInfo.website_config.website_author }}
     </p>
     <a href="https://beian.miit.gov.cn/" target="_blank">
-      {{ blog.blogInfo.siteConfig.recordNumber }}
+      {{ blogStore.blogInfo.website_config.website_record_no }}
     </a>
   </footer>
 </template>
@@ -14,9 +17,11 @@
 <script setup lang="ts">
 import { useBlogStore } from "@/store";
 import { formatDate } from "@/utils/date";
+
 const route = useRoute();
-const blog = useBlogStore();
+const blogStore = useBlogStore();
 const isMessage = computed(() => route.path == "/message");
+const links = ["博客", "项目", "友链", "关于", "联系"];
 </script>
 
 <style lang="scss" scoped>

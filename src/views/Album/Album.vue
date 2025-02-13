@@ -1,18 +1,18 @@
 <template>
   <div class="page-header">
     <h1 class="page-title">相册</h1>
-    <img class="page-cover" src="https://static.ttkwsd.top/config/0639b8855aab4dcbb827a9884e8ec57d.jpg" alt="">
+    <img class="page-cover" :src="cover" alt="" />
     <!-- 波浪 -->
     <Waves></Waves>
   </div>
   <div class="bg">
     <div class="page-container">
       <div class="album-container">
-        <div class="album-item" v-for="album in albumList" :key="album.id">
-          <img class="album-cover" v-lazy="album.albumCover">
+        <div v-for="album in albumList" :key="album.id" class="album-item">
+          <img v-lazy="album.album_cover" class="album-cover" />
           <router-link :to="`/album/${album.id}`" class="album-info">
-            <div class="album-name">{{ album.albumName }}</div>
-            <div class="album-desc">{{ album.albumDesc }}</div>
+            <div class="album-name">{{ album.album_name }}</div>
+            <div class="album-desc">{{ album.album_desc }}</div>
           </router-link>
         </div>
       </div>
@@ -21,14 +21,19 @@
 </template>
 
 <script setup lang="ts">
-import { getAlbumList } from "@/api/album";
-import { Album } from "@/api/album/types";
+import { findAlbumListApi } from "@/api/album";
+import { Album } from "@/api/types";
+import { useBlogStore } from "@/store";
+
+const blogStore = useBlogStore();
+
+const cover = blogStore.getCover("album");
 const albumList = ref<Album[]>([]);
 onMounted(() => {
-  getAlbumList().then(({ data }) => {
-    albumList.value = data.data;
-  })
-})
+  findAlbumListApi().then((res) => {
+    albumList.value = res.data.list;
+  });
+});
 </script>
 
 <style lang="scss" scoped>
@@ -52,7 +57,9 @@ onMounted(() => {
   max-width: none;
   width: calc(100% + 1.25rem);
   height: 15.625rem;
-  transition: opacity 0.35s, transform 0.35s;
+  transition:
+    opacity 0.35s,
+    transform 0.35s;
   transform: translate3d(-10px, 0, 0);
   object-fit: cover;
   opacity: 0.8;
@@ -72,11 +79,11 @@ onMounted(() => {
   position: relative;
   font-weight: 700;
   font-size: 1.25rem;
-  padding: .7rem 0;
+  padding: 0.7rem 0;
   overflow: hidden;
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -91,7 +98,9 @@ onMounted(() => {
 .album-desc {
   padding: 0.4rem 0 0;
   line-height: 1.5;
-  transition: opacity 0.35s, transform 0.35s;
+  transition:
+    opacity 0.35s,
+    transform 0.35s;
   transform: translate3d(100%, 0, 0);
   opacity: 0;
 }

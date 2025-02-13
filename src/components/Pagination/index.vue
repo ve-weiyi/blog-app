@@ -1,5 +1,5 @@
 <template>
-  <n-pagination class="pagination" v-model:page="currentPage" :page-count="total" :page-slot="5">
+  <n-pagination v-model:page="currentPage" class="pagination" :page-count="total" :page-slot="5">
     <template #prev>
       <svg-icon icon-class="angle-left"></svg-icon>
     </template>
@@ -19,13 +19,13 @@ const props = defineProps({
   total: {
     type: Number,
     default: 0,
-  }
+  },
 });
 const currentPage = computed<number | undefined>({
   get: () => props.current,
-  set: value => {
+  set: (value) => {
     emit("update:current", value);
-  }
+  },
 });
 </script>
 

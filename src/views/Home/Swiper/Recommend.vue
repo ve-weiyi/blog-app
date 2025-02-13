@@ -1,34 +1,45 @@
 <template>
-  <swiper v-if="articleList.length > 0" class="swiper-container" :modules="modules" :loop="true" :slides-per-view="1"
-    navigation mousewheel :autoplay="{ delay: 5000, disableOnInteraction: false, }" :pagination="{ clickable: true }">
+  <swiper
+    v-if="articleList.length > 0"
+    class="swiper-container"
+    :modules="modules"
+    :loop="true"
+    :slides-per-view="1"
+    navigation
+    mousewheel
+    :autoplay="{ delay: 5000, disableOnInteraction: false }"
+    :pagination="{ clickable: true }"
+  >
     <swiper-slide v-for="article in articleList" :key="article.id">
-      <div class="slide-content" :style="articleCover(article.articleCover)">
-        <router-link :to="`/article/${article.id}`" class="slide-title">{{ article.articleTitle }}</router-link>
-        <span class="slide-time">发布时间：{{ formatDate(article.createTime) }}</span>
+      <div class="slide-content" :style="articleCover(article.article_cover)">
+        <router-link :to="`/article/${article.id}`" class="slide-title"
+          >{{ article.article_title }}
+        </router-link>
+        <span class="slide-time">发布时间：{{ formatDate(article.created_at) }}</span>
       </div>
     </swiper-slide>
   </swiper>
 </template>
 
 <script setup lang="ts">
-import { getArticleRecommend } from "@/api/article";
-import { ArticleRecommend } from "@/api/article/types";
+import { findArticleRecommendApi } from "@/api/article";
+import { ArticlePreview } from "@/api/types";
 import { formatDate } from "@/utils/date";
-import { Autoplay, Mousewheel, Navigation, Pagination } from 'swiper';
-import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Autoplay, Mousewheel, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/vue";
 // 自定义模块
 const modules = [Pagination, Navigation, Mousewheel, Autoplay];
-const articleList = ref<ArticleRecommend[]>([]);
-const articleCover = computed(() => (cover: string) => 'background:url(' + cover + ')');
+const articleList = ref<ArticlePreview[]>([]);
+const articleCover = computed(() => (cover: string) => "background:url(" + cover + ")");
 onMounted(() => {
-  getArticleRecommend().then(({ data }) => {
-    articleList.value = data.data;
+  findArticleRecommendApi().then((res) => {
+    articleList.value = res.data.list;
   });
 });
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
+@use "@/assets/styles/mixin.scss" as *;
 
 .swiper-container {
   height: 13.875rem;
@@ -36,7 +47,7 @@ onMounted(() => {
   border-radius: 0.75rem;
 
   &::before {
-    content: '推荐';
+    content: "推荐";
     position: absolute;
     z-index: 2;
     color: var(--grey-0);
@@ -66,7 +77,7 @@ onMounted(() => {
   }
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 100%;
     height: 100%;
@@ -115,7 +126,7 @@ onMounted(() => {
 
 :deep(.swiper-button-next):hover,
 :deep(.swiper-button-prev):hover {
-  background: rgba(255, 255, 255, .3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 100%;
 }
 </style>

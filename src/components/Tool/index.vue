@@ -1,12 +1,12 @@
 <template>
   <div class="tool" :style="y > 0 ? show : ''">
-    <div class="item" v-if="route.meta.title == '文章'" @click="handleSide">
+    <div v-if="route.meta.title == '文章'" class="item" @click="handleSide">
       <svg-icon icon-class="heng" size="1.5rem"></svg-icon>
     </div>
-    <div class="item" v-if="commentShow(route.name as string)" @click="handleToComment">
+    <div v-if="commentShow(route.name as string)" class="item" @click="handleToComment">
       <svg-icon icon-class="comments" size="1.2rem"></svg-icon>
     </div>
-    <div class="item back-to-top" @click="handleBackToTop" style="margin-top:0.2rem">
+    <div class="item back-to-top" style="margin-top: 0.2rem" @click="handleBackToTop">
       <svg-icon icon-class="up" size="0.9rem"></svg-icon>
       <span class="count">{{ process }}%</span>
     </div>
@@ -16,11 +16,12 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store";
 import { useEventListener, useScroll } from "@vueuse/core";
-const app = useAppStore();
+
+const appStore = useAppStore();
 const route = useRoute();
 const process = ref(0);
 const show = reactive({
-  transform: "translateX(-45px)"
+  transform: "translateX(-45px)",
 });
 const { y } = useScroll(window);
 const commentList = ["article", "friend", "talkInfo"];
@@ -29,33 +30,31 @@ const commentShow = computed(() => (value: string) => commentList.includes(value
 useEventListener(document, "scroll", () => {
   process.value = Number(
     (
-      (window.pageYOffset /
-        (document.documentElement.scrollHeight - window.innerHeight)) *
+      (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) *
       100
     ).toFixed(0)
-  )
+  );
 });
 const handleSide = () => {
-  app.sideFlag = !app.sideFlag;
+  appStore.sideFlag = !appStore.sideFlag;
 };
 const handleToComment = () => {
   document.getElementById("reply-wrap")?.scrollIntoView({
     block: "start",
     inline: "nearest",
-    behavior: 'smooth'
+    behavior: "smooth",
   });
-}
+};
 const handleBackToTop = () => {
   window.scrollTo({
     top: 0,
-    behavior: 'smooth'
+    behavior: "smooth",
   });
 };
-
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
+@use "@/assets/styles/mixin.scss" as *;
 
 .tool {
   position: fixed;

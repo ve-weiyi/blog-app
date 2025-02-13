@@ -6,31 +6,37 @@
       最新评论
     </div>
     <!-- 评论 -->
-    <div class="comment-item" v-for="comment in commentList" :key="comment.id">
+    <div v-for="comment in commentList" :key="comment.id" class="comment-item">
       <!-- 头像 -->
-      <img class="user-avatar" :src="comment.avatar" alt="" />
+      <img class="user-avatar" :src="comment.user?.avatar" alt="" />
       <div class="comment-content">
         <div class="info">
           <!-- 昵称 -->
-          <span class="comment-name">{{ comment.nickname }}</span>
+          <span class="comment-name">{{ comment.user?.nickname }}</span>
           <!-- 时间 -->
-          <div>{{ formatDate(comment.createTime) }}</div>
+          <div>{{ formatDate(comment.created_at) }}</div>
         </div>
         <!-- 内容 -->
-        <span class="content" v-html="comment.commentContent"></span>
+        <span class="content" v-html="comment.comment_content"></span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { getRecentComment } from "@/api/comment";
-import { RecentComment } from "@/api/comment/types";
+import { findCommentRecentListApi } from "@/api/comment";
 import { formatDate } from "@/utils/date";
-const commentList = ref<RecentComment[]>([]);
+import { Comment, CommentQueryReq } from "@/api/types";
+
+const commentList = ref<Comment[]>([]);
 onMounted(() => {
-  getRecentComment().then(({ data }) => {
-    commentList.value = data.data;
+  const data: CommentQueryReq = {
+    page: 1,
+    page_size: 5,
+  };
+
+  findCommentRecentListApi(data).then((res) => {
+    commentList.value = res.data.list;
   });
 });
 </script>

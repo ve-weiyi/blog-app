@@ -2,7 +2,12 @@
   <div ref="brandRef" class="brand-container">
     <div class="brand">
       <!-- 标题 -->
-      <p class="artboard">{{ blog.blogInfo.siteConfig.siteName }}</p>
+      <p class="artboard">
+        {{ title }}
+      </p>
+      <h3 class="animated zoomIn">
+        {{ author }}
+      </h3>
       <!-- 打字机 -->
       <div class="title">
         {{ obj.output }}
@@ -17,9 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
 import EasyTyper from "easy-typer-js";
-const blog = useBlogStore();
+
 const obj = reactive({
   output: "",
   isEnd: false,
@@ -39,17 +43,41 @@ const scrollDown = () => {
     });
   });
 };
+
+interface Hitokoto {
+  id: number;
+  uuid: string;
+  hitokoto: string;
+  type: string;
+  from: string;
+  from_who: string;
+  creator: string;
+  creator_uid: number;
+  reviewer: number;
+  commit_from: string;
+  created_at: string;
+  length: number;
+}
+
+// 诗篇名称
+const title = ref("");
+
+// 作者
+const author = ref("");
+
 const fetchData = () => {
-  fetch("https://v1.hitokoto.cn")
+  fetch("https://v1.hitokoto.cn?c=i")
     .then((res) => {
       return res.json();
     })
-    .then(({ hitokoto }) => {
+    .then((res: Hitokoto) => {
+      author.value = res.from_who;
+      title.value = res.from;
       new EasyTyper(
         obj,
-        hitokoto,
-        () => { },
-        () => { }
+        res.hitokoto,
+        () => {},
+        () => {}
       );
     });
 };
@@ -59,14 +87,14 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
+@use "@/assets/styles/mixin.scss" as *;
 
 .brand-container {
   @include flex;
   flex-direction: column;
   position: relative;
   width: 100%;
-  height: 70vh;
+  height: 100vh;
   min-height: 10rem;
   color: var(--header-text-color);
 }
@@ -78,11 +106,16 @@ onMounted(() => {
   z-index: -1;
 
   .artboard {
-    font-family: "Fredericka the Great", Mulish, -apple-system, "PingFang SC", "Microsoft YaHei",
+    font-family:
+      "Fredericka the Great",
+      Mulish,
+      -apple-system,
+      "PingFang SC",
+      "Microsoft YaHei",
       sans-serif;
-    font-size: 3.5em;
+    font-size: 2.5em;
     line-height: 1.2;
-    animation: titleScale 1s;
+    animation: title-scale 1s;
   }
 
   .title {

@@ -1,10 +1,17 @@
 <template>
-  <router-link to="/talk" class="talk-swiper" v-if="talkList.length > 0">
+  <router-link v-if="talkList.length > 0" to="/talk" class="talk-swiper">
     <svg-icon icon-class="laba" size="1.25rem"></svg-icon>
-    <swiper class="swiper-container" :direction="'vertical'" :speed="2000" :modules="modules" :loop="true"
-      :slides-per-view="1" :autoplay="{ delay: 3000, disableOnInteraction: false, }">
+    <swiper
+      class="swiper-container"
+      :direction="'vertical'"
+      :speed="2000"
+      :modules="modules"
+      :loop="true"
+      :slides-per-view="1"
+      :autoplay="{ delay: 3000, disableOnInteraction: false }"
+    >
       <swiper-slide v-for="(talk, index) in talkList" :key="index">
-        <div class="slide-content" v-html="talk"></div>
+        <div class="slide-content" v-html="talk.content"></div>
       </swiper-slide>
     </swiper>
     <svg-icon icon-class="right-arrow" class="arrow"></svg-icon>
@@ -12,21 +19,22 @@
 </template>
 
 <script setup lang="ts">
-import { getTalkHomeList } from '@/api/talk';
-import { Autoplay } from 'swiper';
-import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Autoplay } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import { findTalkListApi } from "@/api/talk";
+import { Talk } from "@/api/types";
 // 自动播放
 const modules = [Autoplay];
-const talkList = ref<string[]>([]);
+const talkList = ref<Talk[]>([]);
 onMounted(() => {
-  getTalkHomeList().then(({ data }) => {
-    talkList.value = data.data;
-  })
+  findTalkListApi().then((res) => {
+    talkList.value = res.data.list;
+  });
 });
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
+@use "@/assets/styles/mixin.scss" as *;
 
 .talk-swiper {
   @include flex;

@@ -1,0 +1,17 @@
+# Prettier 会忽略的文件
+
+dist/*
+*.d.ts
+*.css
+*.scss
+package.json
+src/assets
+src/api
+node_modules
+public
+#src/**/*
+
+
+
+
+

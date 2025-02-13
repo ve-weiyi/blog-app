@@ -1,10 +1,18 @@
 <template>
-  <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28"
-    preserveAspectRatio="none" shape-rendering="auto">
+  <svg
+    class="waves"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    viewBox="0 24 150 28"
+    preserveAspectRatio="none"
+    shape-rendering="auto"
+  >
     <!--形状容器-->
     <defs>
-      <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z">
-      </path>
+      <path
+        id="gentle-wave"
+        d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+      ></path>
     </defs>
     <!--组合波浪-->
     <g class="parallax">
@@ -16,8 +24,7 @@
   </svg>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <style lang="scss" scoped>
 .waves {
@@ -25,7 +32,7 @@
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 12vh;
+  height: 9vh;
   min-height: 3.125rem;
   max-height: 9.375rem;
   z-index: 1;
