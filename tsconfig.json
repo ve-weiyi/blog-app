@@ -1,41 +1,69 @@
 {
   "compilerOptions": {
+    // 编译目标和模块化配置
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": false,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "experimentalDecorators": true,
-    "strictFunctionTypes": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "allowImportingTsExtensions": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "allowJs": false,
-    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
     "lib": [
       "ESNext",
-      "DOM"
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
     ],
+
+    // JSX 配置
+    "jsx": "preserve",
+
+    // 模块解析配置
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@build/*": [
-        "build/*"
-      ]
+      "@/*": ["src/*"],
     },
+
+    // 类型声明相关配置
     "types": [
       "node",
       "vite/client",
       "unplugin-icons/types/vue",
       "naive-ui/volar"
-    ]
+    ],
+
+    // 类型检查配置
+    "strict": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+
+    // 实验性特性支持
+    "experimentalDecorators": true,
+    "useDefineForClassFields": true,
+    "verbatimModuleSyntax": true,
+
+    // 构建和兼容性配置
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+
+    // 源码映射
+    "sourceMap": true,
+
+    // 输出配置
+    "noEmit": true,
+
+    // 其他配置
+    "allowImportingTsExtensions": true,
+    "allowJs": false,
+    "resolveJsonModule": true
   },
   "include": [
     "mock/*.ts",
@@ -43,7 +71,8 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "src/types/*.d.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "env.d.ts"
   ],
   "exclude": [
     "dist",

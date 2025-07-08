@@ -3,12 +3,21 @@ node_modules
 dist
 dist-ssr
 *.local
-coverage
-stats.html
+.history
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
 
 # 包管理器
-# package-lock.json
-# yarn.lock
+stats.html
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
 
 # 日志
 logs
@@ -28,6 +37,4 @@ lerna-debug.log*
 # 全局组件声明
 # 每次启动服务或打包都会生成最新的，所以无需传到 Git 上
 components.d.ts
-/.idea/
-/blog/
-/.eslintrc-auto-import.json
+.eslintrc-auto-import.json

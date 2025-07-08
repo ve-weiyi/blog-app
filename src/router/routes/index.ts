@@ -117,7 +117,7 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: "/oauth/login/:platform",
-    component: () => import("@/components/Oauth/index.vue"),
+    component: () => import("@/views/Oauth/index.vue"),
   },
   // { path: "/:catchAll(.*)", redirect: "/404" },
 ];

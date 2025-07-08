@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { findAlbumListApi } from "@/api/album";
-import { Album } from "@/api/types";
+import { AlbumAPI } from "@/api/album";
+import type { Album } from "@/api/types";
 import { useBlogStore } from "@/store";
 
 const blogStore = useBlogStore();
@@ -30,7 +30,7 @@ const blogStore = useBlogStore();
 const cover = blogStore.getCover("album");
 const albumList = ref<Album[]>([]);
 onMounted(() => {
-  findAlbumListApi().then((res) => {
+  AlbumAPI.findAlbumListApi().then((res) => {
     albumList.value = res.data.list;
   });
 });

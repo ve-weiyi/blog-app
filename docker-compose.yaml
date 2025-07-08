@@ -1,11 +1,7 @@
 version: "3"
 
-# 设置mysql，redis持久化保存
-#volumes:
-#  mysql:
-#  redis:
-
 services:
+  # 前端服务
   ve-blog-naive:
     build:
       context: ./
@@ -14,4 +10,4 @@ services:
     container_name: ve-blog-naive
     restart: always
     ports:
-      - "9990:80"
+      - "9420:80"

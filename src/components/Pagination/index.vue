@@ -10,18 +10,26 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(["update:current"]);
+import type { PropType } from "vue";
+
+interface PaginationEmits {
+  (e: "update:current", value: number): void;
+}
+
+const emit = defineEmits<PaginationEmits>();
+
 const props = defineProps({
   current: {
-    type: Number,
+    type: Number as PropType<number>,
     default: 1,
   },
   total: {
-    type: Number,
+    type: Number as PropType<number>,
     default: 0,
   },
 });
-const currentPage = computed<number | undefined>({
+
+const currentPage = computed<number>({
   get: () => props.current,
   set: (value) => {
     emit("update:current", value);

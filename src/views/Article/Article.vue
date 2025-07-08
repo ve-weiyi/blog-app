@@ -41,12 +41,12 @@
     <div v-if="article" class="main-container">
       <div class="left-container" :class="appStore.sideFlag ? 'w-full' : ''">
         <div class="article-container">
-          <v-md-preview
+          <VMdPreview
             ref="articleRef"
             v-viewer
             class="md"
             :text="article.article_content"
-          ></v-md-preview>
+          ></VMdPreview>
           <div class="article-post">
             <div class="tag-share">
               <router-link
@@ -66,7 +66,10 @@
                 点赞
                 <span>{{ article.like_count }}</span>
               </button>
-              <n-popover v-if="blogStore.blogInfo.website_config.is_reward" trigger="click">
+              <n-popover
+                v-if="blogStore.blogInfo.website_config.website_feature.is_reward"
+                trigger="click"
+              >
                 <template #trigger>
                   <button class="btn reward-btn">
                     <svg-icon icon-class="qr_code" size="0.9rem"></svg-icon>
@@ -76,21 +79,21 @@
                 <div class="reward-all">
                   <span>
                     <img
-                      v-lazy="blogStore.blogInfo.website_config.weixin_qr_code"
+                      v-lazy="blogStore.blogInfo.website_config.reward_qr_code.weixin_qr_code"
                       class="reward-img"
                     />
                     <div class="reward-desc">微信</div>
                   </span>
                   <span style="margin-left: 0.3rem">
                     <img
-                      v-lazy="blogStore.blogInfo.website_config.alipay_qr_code"
+                      v-lazy="blogStore.blogInfo.website_config.reward_qr_code.alipay_qr_code"
                       class="reward-img"
                     />
                     <div class="reward-desc">支付宝</div>
                   </span>
                 </div>
               </n-popover>
-              <p v-if="blogStore.blogInfo.website_config.is_reward" class="tea">
+              <p v-if="blogStore.blogInfo.website_config.website_feature.is_reward" class="tea">
                 请我喝[茶]~(￣▽￣)~*
               </p>
             </div>
@@ -102,7 +105,11 @@
                     size="0.9rem"
                     style="margin-right: 0.3rem"
                   ></svg-icon>
-                  <strong>本文作者： </strong>{{ blogStore.blogInfo.website_config.website_author }}
+                  <strong>本文作者：</strong
+                  >{{
+                    article.author?.nickname ||
+                    blogStore.blogInfo.website_config.website_info.website_author
+                  }}
                 </li>
                 <li class="link">
                   <svg-icon
@@ -119,7 +126,7 @@
                     size="0.8rem"
                     style="margin-right: 0.3rem"
                   ></svg-icon>
-                  <strong>版权声明： </strong>本站所有文章除特别声明外，均采用
+                  <strong>版权声明：</strong>本站所有文章除特别声明外，均采用
                   <a
                     href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh"
                     target="_blank"
@@ -166,8 +173,9 @@
 </template>
 
 <script setup lang="ts">
-import { getArticleDetailsApi, likeArticleApi } from "@/api/article";
-import { ArticleDetails } from "@/api/types";
+import VMdPreview from "@kangc/v-md-editor/lib/preview";
+import { ArticleAPI } from "@/api/article";
+import type { ArticleDetails } from "@/api/types";
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
 import { formatDate } from "@/utils/date";
 import { Share } from "vue3-social-share";
@@ -209,7 +217,7 @@ const like = () => {
     return;
   }
   let id = article.value.id;
-  likeArticleApi({ id }).then((res) => {
+  ArticleAPI.likeArticleApi({ id }).then((res) => {
     //判断是否点赞
     if (userStore.isArticleLike(id)) {
       window.$message?.error("取消点赞成功");
@@ -223,7 +231,7 @@ const like = () => {
 };
 onMounted(() => {
   const id = Number(route.params.id);
-  getArticleDetailsApi({ id }).then((res) => {
+  ArticleAPI.getArticleDetailsApi({ id }).then((res) => {
     article.value = res.data;
     document.title = article.value.article_title;
     wordNum.value = deleteHTMLTag(article.value.article_content).length;

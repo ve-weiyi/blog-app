@@ -1,7 +1,16 @@
 import { clearStorage, getToken, setToken, setUid } from "@/utils/token";
-import { getUserInfoApi, getUserLikeApi } from "@/api/user";
-import { loginApi, logoutApi, oauthLoginApi } from "@/api/auth";
-import type { EmptyResp, LoginReq, LoginResp, OauthLoginReq, UserInfoResp, UserLikeResp } from "@/api/types";
+import { UserAPI } from "@/api/user";
+import { AuthAPI } from "@/api/auth";
+import type {
+  EmailLoginReq,
+  EmptyResp,
+  LoginReq,
+  LoginResp,
+  PhoneLoginReq,
+  ThirdLoginReq,
+  UserInfoResp,
+  UserLikeResp,
+} from "@/api/types";
 
 /**
  * 用户
@@ -12,26 +21,27 @@ interface UserState {
 }
 
 export const useUserStore = defineStore("useUserStore", {
-  state: (): UserState => <UserState>({
-    userInfo: {
-      user_id: "",
-      username: "",
-      nickname: "",
-      avatar: "",
-      intro: "",
-      website: "",
-      email: "",
+  state: (): UserState =>
+    <UserState>{
+      userInfo: {
+        user_id: "",
+        username: "",
+        nickname: "",
+        avatar: "",
+        intro: "",
+        website: "",
+        email: "",
+      },
+      userLike: {
+        article_like_set: [],
+        comment_like_set: [],
+        talk_like_set: [],
+      },
     },
-    userLike: {
-      article_like_set: [],
-      comment_like_set: [],
-      talk_like_set: [],
-    },
-  }),
   actions: {
-    oauthLogin(oauth: OauthLoginReq): Promise<IApiResponse<LoginResp>> {
+    login(loginData: LoginReq): Promise<IApiResponse<LoginResp>> {
       return new Promise((resolve, reject) => {
-        oauthLoginApi(oauth)
+        AuthAPI.loginApi(loginData)
           .then((res) => {
             const token = res.data.token;
             setUid(String(token.user_id));
@@ -43,9 +53,38 @@ export const useUserStore = defineStore("useUserStore", {
           });
       });
     },
-    login(user: LoginReq): Promise<IApiResponse<LoginResp>> {
+    emailLogin(loginData: EmailLoginReq): Promise<IApiResponse<LoginResp>> {
       return new Promise((resolve, reject) => {
-        loginApi(user)
+        AuthAPI.emailLoginApi(loginData)
+          .then((res) => {
+            const token = res.data.token;
+            setUid(String(token.user_id));
+            setToken(token.access_token);
+            resolve(res);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    },
+    phoneLogin(loginData: PhoneLoginReq): Promise<IApiResponse<LoginResp>> {
+      return new Promise((resolve, reject) => {
+        AuthAPI.phoneLoginApi(loginData)
+          .then((res) => {
+            const token = res.data.token;
+            setUid(String(token.user_id));
+            setToken(token.access_token);
+            resolve(res);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    },
+
+    thirdLogin(loginData: ThirdLoginReq): Promise<IApiResponse<LoginResp>> {
+      return new Promise((resolve, reject) => {
+        AuthAPI.thirdLoginApi(loginData)
           .then((res) => {
             const token = res.data.token;
             setUid(String(token.user_id));
@@ -59,7 +98,7 @@ export const useUserStore = defineStore("useUserStore", {
     },
     logout(): Promise<IApiResponse<EmptyResp>> {
       return new Promise((resolve, reject) => {
-        logoutApi()
+        AuthAPI.logoutApi()
           .then((res) => {
             this.forceLogOut();
             clearStorage();
@@ -72,10 +111,10 @@ export const useUserStore = defineStore("useUserStore", {
     },
     getUserInfo(): Promise<IApiResponse<UserInfoResp>> {
       if (!this.isLogin()) {
-        return;
+        return Promise.reject("未登录");
       }
       return new Promise((resolve, reject) => {
-        getUserInfoApi()
+        UserAPI.getUserInfoApi()
           .then((res) => {
             this.userInfo = res.data;
             resolve(res);
@@ -87,10 +126,10 @@ export const useUserStore = defineStore("useUserStore", {
     },
     getUserLike(): Promise<IApiResponse<UserLikeResp>> {
       if (!this.isLogin()) {
-        return;
+        return Promise.reject("未登录");
       }
       return new Promise((resolve, reject) => {
-        getUserLikeApi()
+        UserAPI.getUserLikeApi()
           .then((res) => {
             this.userLike = res.data;
             resolve(res);

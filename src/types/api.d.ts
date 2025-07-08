@@ -3,7 +3,8 @@ interface IApiResponse<T> {
   flag: boolean;
   code: number;
   data: T;
-  message: string;
+  msg: string;
+  trace_id: string;
 }
 
 interface PageResult<T> {

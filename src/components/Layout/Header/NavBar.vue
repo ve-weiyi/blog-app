@@ -2,7 +2,7 @@
   <div class="menu">
     <div class="menu-item title">
       <router-link to="/" class="menu-btn">
-        {{ blogStore.blogInfo.website_config.website_name }}
+        {{ blogStore.blogInfo.website_config.website_info.website_name }}
       </router-link>
     </div>
     <template v-for="menu of menuList" :key="menu.name">

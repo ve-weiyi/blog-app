@@ -8,7 +8,7 @@
     :block-scroll="false"
   >
     <div class="login-title">注册账号</div>
-    <n-input v-model:value="registerForm.username" class="mt-11" placeholder="邮箱号"></n-input>
+    <n-input v-model:value="registerForm.email" class="mt-11" placeholder="邮箱"></n-input>
     <n-input-group class="mt-11">
       <n-input v-model:value="registerForm.verify_code" placeholder="验证码"></n-input>
       <n-button color="#49b1f5" :disabled="flag" @click="sendCode">
@@ -42,8 +42,8 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store";
 import { useIntervalFn } from "@vueuse/core";
-import { registerApi, sendRegisterEmailApi } from "@/api/auth";
-import { RegisterReq } from "@/api/types";
+import { AuthAPI } from "@/api/auth";
+import type { RegisterReq } from "@/api/types";
 
 const appStore = useAppStore();
 const registerRef = ref();
@@ -78,12 +78,15 @@ const start = (time: number) => {
 };
 const sendCode = () => {
   let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-  if (!reg.test(registerForm.value.username)) {
+  if (!reg.test(registerForm.value.email)) {
     window.$message?.warning("邮箱格式不正确");
     return;
   }
   start(60);
-  sendRegisterEmailApi(registerForm.value).then((res) => {
+  AuthAPI.sendEmailVerifyCodeApi({
+    email: registerForm.value.email,
+    type: "register",
+  }).then((res) => {
     window.$message?.success("发送成功");
   });
 };
@@ -96,8 +99,15 @@ const handleRegister = () => {
     window.$message?.warning("密码不能少于6位");
     return;
   }
+
   loading.value = true;
-  registerApi(registerForm.value).then((res) => {
+  AuthAPI.registerApi({
+    username: registerForm.value.email,
+    password: registerForm.value.password,
+    confirm_password: registerForm.value.password,
+    email: registerForm.value.email,
+    verify_code: registerForm.value.verify_code,
+  }).then((res) => {
     window.$message?.success("注册成功");
     appStore.setRegisterFlag(false);
     appStore.setLoginFlag(true);

@@ -33,7 +33,7 @@
                     <li
                       v-for="(item, index) in musicSearchList"
                       :key="index"
-                      @click="ListAdd(item)"
+                      @click="ListAdd(item.id)"
                     >
                       <span class="music_search_name">{{ item.name }}</span>
                       <span class="music_search_ar">{{ item.artists[0].name }}</span>
@@ -69,7 +69,7 @@
                       class="list_play"
                       title="添加到 My Songs"
                       :style="{ backgroundImage: 'url(' + add + ')' }"
-                      @click="ListAdd(item)"
+                      @click="ListAdd(item.id)"
                       v-if="thisMusicType != -1"
                     ></div>
                   </div>
@@ -140,7 +140,7 @@
           <div class="dis_list" @click="DisList">···</div>
           <p class="music_title">{{ musicTitle }}</p>
           <p class="music_intro">歌手: {{ musicName }}</p>
-          <ul class="music_words">
+          <ul class="music_words" ref="musicWordsRef">
             <div class="music_words_box" :style="{ top: wordsTop + 'px' }">
               <li
                 v-for="(item, index) in musicWords"
@@ -155,9 +155,22 @@
         </div>
         <div class="control_box">
           <div class="control_button">
-            <img :src="playIcon" alt="" class="control_icon" onclick="" />
+            <img
+              :src="playIcon"
+              alt=""
+              class="control_icon"
+              ref="controlIconRef"
+              @click="togglePlay"
+            />
           </div>
-          <div class="progress">
+          <div
+            class="progress"
+            ref="progressBarRef"
+            @mousedown="onProgressMouseDown"
+            @mousemove="onProgressMouseMove"
+            @mouseup="onProgressMouseUp"
+            @mouseleave="onProgressMouseLeave"
+          >
             <div class="progress_c" :style="{ width: currentProgress }">
               <div class="progress_circle">
                 <div class="progress_circle_c"></div>
@@ -171,7 +184,7 @@
           </div>
         </div>
       </div>
-      <video id="music" :src="musicUrl" name="media"></video>
+      <video id="music" :src="musicUrl" name="media" ref="playerRef"></video>
     </div>
   </div>
 </template>
@@ -186,6 +199,7 @@ import {
   getSearchSuggest,
   getWords,
 } from "./api/music";
+import type { Comment, MusicInfo, MusicType } from "./types";
 // 导入图片，直接作为变量使用
 import pan from "./img/pan.png";
 import play from "./img/play.png";
@@ -199,61 +213,71 @@ import talkicon1 from "./img/talkicon1.png";
 import talkicon2 from "./img/talkicon2.png";
 
 // 定义响应式数据
-const o = ref(0);
-const top = ref(0);
-const playState = ref(true);
-const playIcon = ref(pause);
-const musicImg = ref("");
-const musicUrl = ref("");
+const o = ref<number>(0);
+const top = ref<number>(0);
+const playState = ref<boolean>(true);
+const playIcon = ref<string>(pause);
+const musicImg = ref<string>("");
+const musicUrl = ref<string>("");
 const musicWords = ref<string[]>([]);
-const musicTitle = ref("");
-const musicName = ref("");
+const musicTitle = ref<string>("");
+const musicName = ref<string>("");
 const wordsTime = ref<number[]>([]);
-const wordsTop = ref(0);
-const wordIndex = ref(0);
-const currentProgress = ref("0%");
-const musicList = ref<any[]>([]);
-const myMusicList = ref<any[]>([]); // 存储在本地，可以开始判断有没有，让用户一开始就听这个列表
-const thisMusicIndex = ref(1);
-const disActive = ref(false);
-const listIsDis = ref(false);
-const listButtonActiveIndex = ref(-1);
-const thisListPage = ref(1);
-const musicSearchVal = ref("");
-const musicSearchList = ref<any[]>([]);
-const musicAlertVal = ref("");
-const musicAlertState = ref(false);
-const musicAlertTimer = ref<any>(null);
+const wordsTop = ref<number>(0);
+const wordIndex = ref<number>(0);
+const currentProgress = ref<string>("0%");
+const musicList = ref<MusicInfo[]>([]); // 音乐列表，初始为空
+const myMusicList = ref<MusicInfo[]>([]); // 存储在本地，可以开始判断有没有，让用户一开始就听这个列表
+const thisMusicIndex = ref<number>(1);
+const disActive = ref<boolean>(false);
+const listIsDis = ref<boolean>(false);
+const listButtonActiveIndex = ref<number>(-1);
+const thisListPage = ref<number>(1);
+const musicSearchVal = ref<string>("");
+const musicSearchList = ref<MusicInfo[]>([]);
+const musicAlertVal = ref<string>("");
+const musicAlertState = ref<boolean>(false);
+const musicAlertTimer = ref<NodeJS.Timeout | null>(null);
 // 新增歌词评论
-const hotTalkList = ref<any[]>([]);
+const hotTalkList = ref<Comment[]>([]);
 
-const musicTypeList = [
+// 使用 ref 引用 DOM 元素
+const playerRef = ref<HTMLAudioElement>();
+const controlIconRef = ref<HTMLElement>();
+const progressBarRef = ref<HTMLElement>();
+const musicWordsRef = ref<HTMLElement>();
+
+// 进度条拖拽相关状态
+const isDragging = ref<boolean>(false);
+const playerTimer = ref<NodeJS.Timeout | null>(null);
+
+const musicTypeList: MusicType[] = [
   { name: "热歌榜", id: 3778678 },
   { name: "新歌榜", id: 3779629 },
   { name: "飙升榜", id: 19723756 },
   { name: "嘻哈榜", id: 991319590 },
   { name: "My Songs", id: -1 },
 ];
-const thisMusicType = ref(0);
-const notPlay = ref<any[]>([]); // 用于存储不能播放的歌曲列表
-const musicState = ref(0); // 0 列表循环，1 单曲循环
-const musicStateButton = ref(state1);
+const thisMusicType = ref<number>(0);
+const notPlay = ref<number[]>([]); // 用于存储不能播放的歌曲列表
+const musicState = ref<number>(0); // 0 列表循环，1 单曲循环
+const musicStateButton = ref<string>(state1);
 
-const thisMusicList = computed(() => {
+const thisMusicList = computed<MusicInfo[]>(() => {
   return [...musicList.value].splice((thisListPage.value - 1) * 10, 10); // 分页
 });
 
-const currentTime = ref(0);
-const durationTime = ref(0);
-const currentStr = computed(() => {
+const currentTime = ref<number>(0);
+const durationTime = ref<number>(0);
+const currentStr = computed<string>(() => {
   return formatSeconds(currentTime.value);
 });
 
-const durationStr = computed(() => {
+const durationStr = computed<string>(() => {
   return formatSeconds(durationTime.value);
 });
 
-function formatSeconds(seconds) {
+function formatSeconds(seconds: number): string {
   const minutes = Math.floor(seconds / 60); // 计算分钟，省略小数部分
   const remainingSeconds = Math.floor(seconds % 60); // 计算剩余秒数，省略小数部分
 
@@ -264,78 +288,19 @@ function formatSeconds(seconds) {
   return `${formattedMinutes}:${formattedSeconds}`;
 }
 
-// 监听搜索框的变化
-watch(musicSearchVal, () => {
-  if (musicSearchVal.value === "") {
-    musicSearchList.value = [];
-  } else {
-    getSearchSuggest(musicSearchVal.value).then((res) => {
-      musicSearchList.value = res.data.result.songs || [];
-    });
-  }
-});
-
-let player: HTMLAudioElement;
-let controlIcon: HTMLElement;
-let progressBar: HTMLElement;
-// 页面挂载时初始化播放器
-onMounted(() => {
-  player = document.getElementById("music") as HTMLAudioElement;
-  controlIcon = document.querySelector(".control_icon") as HTMLElement;
-  progressBar = document.querySelector(".progress") as HTMLElement;
-
-  Player();
-});
-
-// 页面创建时初始化数据
-onBeforeMount(() => {
-  // if (myMusicList.value.length !== 0) {
-  //   _getMusicType(-1);
-  // } else {
-  //   _getMusicType(3779629);
-  // }
-  ListAdd({ id: 2124731026 });
-  // _getMusicType(-1);
-  DisAuthorInfo(); // 禁删~感谢配合
-});
-
-// 禁删~感谢配合
-function DisAuthorInfo() {
-  console.log(
-    "%c音乐播放器作者----与梦，博客地址：https://veweiyi.cn",
-    "background-color:rgb(30,30,30);border-radius:4px;font-size:12px;padding:4px;color:rgb(220,208,129);"
-  );
-}
-
 // 提示音乐信息
-function MusicAlert(val: string) {
+function MusicAlert(val: string): void {
   musicAlertState.value = true;
   musicAlertVal.value = val;
-  clearTimeout(musicAlertTimer.value);
+  clearTimeout(musicAlertTimer.value!);
   musicAlertTimer.value = setTimeout(() => {
     musicAlertState.value = false;
     musicAlertVal.value = "";
   }, 2000);
 }
 
-// 将歌曲添加到我的歌单
-function ListAdd(obj: { id: number }) {
-  getMusicInfo(obj.id).then((res) => {
-    musicSearchVal.value = "";
-    if (myMusicList.value.length === 0) {
-      myMusicList.value = [res.data.songs[0]];
-      _getMusicType(-1);
-      // 第一次搜索直接播放
-    } else {
-      myMusicList.value.push(res.data.songs[0]);
-      // 提示已经添加进去
-    }
-    MusicAlert("添加成功");
-  });
-}
-
 // 切换播放状态（列表循环、单曲循环）
-function MusicStateChange() {
+function MusicStateChange(): void {
   if (musicState.value === 0) {
     musicState.value = 1;
     musicStateButton.value = state0;
@@ -347,13 +312,23 @@ function MusicStateChange() {
   }
 }
 
+// 设置播放列表按钮的激活状态
+function ButtonActive(id: number): void {
+  listButtonActiveIndex.value = id;
+}
+
+// 切换播放器的激活状态
+function DisActive(): void {
+  disActive.value = !disActive.value;
+}
+
 // 控制播放列表显示
-function DisList() {
+function DisList(): void {
   listIsDis.value = !listIsDis.value;
 }
 
 // 切换播放列表的页码
-function ListChange(isLast: boolean) {
+function ListChange(isLast: boolean): void {
   if (isLast) {
     thisListPage.value--;
   } else {
@@ -361,32 +336,43 @@ function ListChange(isLast: boolean) {
   }
 }
 
+// 将歌曲添加到我的歌单
+function ListAdd(id: number): void {
+  getMusicInfo(id).then((res) => {
+    musicSearchVal.value = "";
+    if (myMusicList.value.length === 0) {
+      myMusicList.value = [res.data.songs[0]];
+      _getMusicType(-1);
+      // 第一次搜索直接播放
+      _getInfo();
+      // ListPlay(0);
+    } else {
+      myMusicList.value.push(res.data.songs[0]);
+      // 提示已经添加进去
+    }
+    MusicAlert("添加成功");
+  });
+}
+
 // 切换播放的歌曲
-function ListPlay(id: number) {
-  thisMusicIndex.value = id > musicList.value.length - 1 ? 0 : id;
-  _getInfo();
-  top.value = 0;
-  o.value = 0;
-  wordIndex.value = 0;
-  wordsTop.value = 0;
-  currentProgress.value = "0%";
-  if (!playState.value) {
-    controlIcon.click();
-  }
-}
-
-// 设置播放列表按钮的激活状态
-function ButtonActive(id: number) {
-  listButtonActiveIndex.value = id;
-}
-
-// 切换播放器的激活状态
-function DisActive() {
-  disActive.value = !disActive.value;
+function ListPlay(index: number): void {
+  thisMusicIndex.value = index > musicList.value.length - 1 ? 0 : index;
+  _getInfo().then(() => {
+    top.value = 0;
+    o.value = 0;
+    wordIndex.value = 0;
+    wordsTop.value = 0;
+    currentProgress.value = "0%";
+    if (!playState.value && controlIconRef.value) {
+      togglePlay();
+    } else {
+      playerRef.value.play();
+    }
+  });
 }
 
 // 获取音乐类型
-function _getMusicType(id: number) {
+function _getMusicType(id: number): void {
   if (thisMusicType.value !== id) {
     notPlay.value = [];
     if (id === -1) {
@@ -395,7 +381,7 @@ function _getMusicType(id: number) {
         thisMusicType.value = id;
         thisMusicIndex.value = 0;
         thisListPage.value = 1;
-        ListPlay(0);
+        // ListPlay(0);
       } else {
         // 自定义库没有歌曲，提示需要搜索才能添加
         MusicAlert("没有歌曲,需要自己添加");
@@ -406,35 +392,34 @@ function _getMusicType(id: number) {
         thisMusicType.value = id;
         thisMusicIndex.value = 0;
         thisListPage.value = 1;
-        ListPlay(0);
+        // ListPlay(0);
       });
     }
   }
 }
 
 // 获取歌曲信息
-function _getInfo() {
-  getMusicUrl(musicList.value[thisMusicIndex.value].id).then((res) => {
+function _getInfo(): Promise<void> {
+  let music = musicList.value[thisMusicIndex.value];
+  return getMusicUrl(music.id).then((res) => {
     if (!res.data.data[0].url) {
       if (notPlay.value.length !== musicList.value.length) {
         let nextIndex = thisMusicIndex.value + 1;
         if (!notPlay.value.includes(thisMusicIndex.value)) {
           notPlay.value.push(thisMusicIndex.value);
         }
-        MusicAlert(`${musicList.value[thisMusicIndex.value].name} 因为一些原因不能播放`);
+        MusicAlert(`${music.name} 因为一些原因不能播放`);
         ListPlay(nextIndex); // 寻找下一首歌，直到找到可播放的
       } else {
         MusicAlert("此列表所有歌都不能播放");
       }
     } else {
       musicUrl.value = res.data.data[0].url.replace("http://", "https://");
-      musicImg.value =
-        musicList.value[thisMusicIndex.value].al.picUrl.replace("http://", "https://") +
-        "?param=300y300";
-      musicTitle.value = musicList.value[thisMusicIndex.value].name;
-      musicName.value = musicList.value[thisMusicIndex.value].ar.map((i: any) => i.name).join("/");
+      musicImg.value = music.al.picUrl.replace("http://", "https://") + "?param=300y300";
+      musicTitle.value = music.name;
+      musicName.value = music.ar.map((i: any) => i.name).join("/");
 
-      getWords(musicList.value[thisMusicIndex.value].id).then((res) => {
+      getWords(music.id).then((res) => {
         if (!res.data.nolyric) {
           let info = Cut(res.data.lrc.lyric);
           musicWords.value = info.wordArr;
@@ -442,7 +427,7 @@ function _getInfo() {
         }
       });
 
-      getHotTalk(musicList.value[thisMusicIndex.value].id).then((res) => {
+      getHotTalk(music.id).then((res) => {
         let count = 0;
         hotTalkList.value = res.data.hotComments.slice(0, 3);
         hotTalkList.value.forEach((e) => {
@@ -457,8 +442,14 @@ function _getInfo() {
   });
 }
 
+// 歌词解析结果接口
+interface LyricParseResult {
+  wordArr: string[];
+  timeArr: number[];
+}
+
 // 处理歌词文本
-function Cut(str: string) {
+function Cut(str: string): LyricParseResult {
   let wordArr: string[] = [];
   let timeArr: number[] = [];
   let arr = str.split("\n");
@@ -473,33 +464,28 @@ function Cut(str: string) {
   return { wordArr, timeArr };
 }
 
-function Player() {
-  let playerTimer = setInterval(timer, 500);
+// 定时器函数
+function timer(): void {
+  if (!playerRef.value) return;
 
-  // // 自动播放控制
-  // document.body.addEventListener("click", function playMusicOnce() {
-  //   player.play();
-  //   // 移除点击事件监听器，确保只执行一次
-  //   document.body.removeEventListener("click", playMusicOnce);
-  // });
+  durationTime.value = playerRef.value.duration;
+  currentTime.value = playerRef.value.currentTime;
+  currentProgress.value = `${(playerRef.value.currentTime / playerRef.value.duration) * 100}%`;
+  if (!playerRef.value.duration) {
+    return;
+  }
 
-  function timer() {
-    durationTime.value = player.duration;
-    currentTime.value = player.currentTime;
-    currentProgress.value = `${(player.currentTime / player.duration) * 100}%`;
-    if (!player.duration) {
-      return;
-    }
-
-    // 歌词滚动控制
-    if (player.currentTime >= wordsTime.value[o.value + 1]) {
-      let wh = document.querySelectorAll(".music_word")[o.value].clientHeight;
-      let wt = window.getComputedStyle(document.querySelectorAll(".music_word")[o.value]).marginTop;
-      let wsh = document.querySelector(".music_words")?.clientHeight;
+  // 歌词滚动控制
+  if (playerRef.value.currentTime >= wordsTime.value[o.value + 1]) {
+    const musicWordElements = musicWordsRef.value?.querySelectorAll(".music_word");
+    if (musicWordElements && musicWordElements[o.value]) {
+      let wh = musicWordElements[o.value].clientHeight;
+      let wt = window.getComputedStyle(musicWordElements[o.value]).marginTop;
+      let wsh = musicWordsRef.value?.clientHeight;
 
       top.value += wh + parseInt(wt);
 
-      if (top.value >= wsh / 2 - 11) {
+      if (wsh && top.value >= wsh / 2 - 11) {
         //开始滚动的高度
         wordsTop.value += -(wh + parseInt(wt));
       }
@@ -507,16 +493,15 @@ function Player() {
       wordIndex.value = o.value + 1;
       o.value++;
     }
-    if (player.currentTime >= player.duration) {
-      // 切换歌曲
-      if (musicList.value.length !== 1) {
-        if (this.musicState === 0) {
-          thisMusicIndex.value =
-            thisMusicIndex.value >= musicList.value.length - 1 ? 0 : thisMusicIndex.value + 1;
-          _getInfo();
-        }
-      }
-      player.play();
+  }
+  if (playerRef.value.currentTime >= playerRef.value.duration) {
+    // 切换歌曲
+    if (musicList.value.length !== 1 && musicState.value === 0) {
+      thisMusicIndex.value =
+        thisMusicIndex.value >= musicList.value.length - 1 ? 0 : thisMusicIndex.value + 1;
+      ListPlay(thisMusicIndex.value);
+    } else {
+      playerRef.value.play();
       top.value = 0;
       o.value = 0;
       wordIndex.value = 0;
@@ -524,89 +509,175 @@ function Player() {
       currentProgress.value = "0%";
     }
   }
+}
 
-  // 进度条控制
-  if (progressBar) {
-    progressBar.addEventListener("mousedown", (ev: MouseEvent) => {
-      const pro = (ev.clientX - progressBar.getBoundingClientRect().left) / progressBar.offsetWidth;
-      clearInterval(playerTimer);
-      currentProgress.value = `${pro * 100}%`;
+// 播放/暂停切换
+function togglePlay(): void {
+  if (!playerRef.value) return;
 
-      const mouseMoveHandler = (ev: MouseEvent) => {
-        const newPro =
-          (ev.clientX - progressBar.getBoundingClientRect().left) / progressBar.offsetWidth;
-        currentProgress.value = `${newPro * 100}%`;
-      };
+  if (playState.value) {
+    playerRef.value.pause();
+    playState.value = false;
+    playIcon.value = play;
+    if (playerTimer.value) {
+      clearInterval(playerTimer.value);
+      playerTimer.value = null;
+    }
+  } else {
+    playerRef.value.play();
+    playState.value = true;
+    playIcon.value = pause;
+    if (playerTimer.value) {
+      clearInterval(playerTimer.value);
+    }
+    playerTimer.value = setInterval(timer, 1000);
+  }
+}
 
-      const mouseUpHandler = () => {
-        player.currentTime = player.duration * pro;
-        const c_arr = [...wordsTime.value];
-        c_arr.push(player.currentTime);
-        c_arr.sort((l, r) => l - r);
-        const now_o = c_arr.indexOf(player.currentTime) - 1;
-        let diff_h = 0;
-        if (o.value < now_o) {
-          for (let i = o.value; i < now_o; i++) {
-            diff_h += -(
-              document.querySelectorAll(".music_word")[i].clientHeight +
-              parseInt(
-                window.getComputedStyle(document.querySelectorAll(".music_word")[i]).marginTop
-              )
-            );
-          }
-        } else {
-          for (let i = now_o; i < o.value; i++) {
-            diff_h +=
-              document.querySelectorAll(".music_word")[i].clientHeight +
-              parseInt(
-                window.getComputedStyle(document.querySelectorAll(".music_word")[i]).marginTop
-              );
-          }
-        }
+// 进度条鼠标按下事件
+function onProgressMouseDown(ev: MouseEvent): void {
+  if (!progressBarRef.value || !playerRef.value) return;
 
-        wordsTop.value += diff_h;
-        wordIndex.value = o.value = now_o;
+  isDragging.value = true;
+  const pro =
+    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
+    progressBarRef.value.offsetWidth;
 
-        clearInterval(playerTimer);
-        playerTimer = setInterval(timer, 1000);
-        playState.value = true;
-        playIcon.value = pause;
-        if (player.currentTime >= player.duration) {
-          top.value = 0;
-          o.value = 0;
-          wordIndex.value = 0;
-          wordsTop.value = 0;
-          currentProgress.value = "0%";
-        }
-        player.play();
-
-        // Clean up
-        progressBar.removeEventListener("mousemove", mouseMoveHandler);
-        progressBar.removeEventListener("mouseup", mouseUpHandler);
-      };
-
-      progressBar.addEventListener("mousemove", mouseMoveHandler);
-      progressBar.addEventListener("mouseup", mouseUpHandler);
-    });
+  if (playerTimer.value) {
+    clearInterval(playerTimer.value);
+    playerTimer.value = null;
   }
 
-  // 播放/暂停控制
-  if (controlIcon) {
-    controlIcon.addEventListener("click", () => {
-      if (playState.value) {
-        player.pause();
-        playState.value = false;
-        playIcon.value = play;
-        clearInterval(playerTimer);
-      } else {
-        player.play();
-        playState.value = true;
-        playIcon.value = pause;
-        clearInterval(playerTimer);
-        playerTimer = setInterval(timer, 1000);
+  currentProgress.value = `${pro * 100}%`;
+  playerRef.value.currentTime = playerRef.value.duration * pro;
+
+  updateLyricPosition(playerRef.value.currentTime);
+}
+
+// 进度条鼠标移动事件
+function onProgressMouseMove(ev: MouseEvent): void {
+  if (!isDragging.value || !progressBarRef.value) return;
+
+  const newPro =
+    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
+    progressBarRef.value.offsetWidth;
+  currentProgress.value = `${newPro * 100}%`;
+}
+
+// 进度条鼠标松开事件
+function onProgressMouseUp(ev: MouseEvent): void {
+  if (!isDragging.value || !progressBarRef.value || !playerRef.value) return;
+
+  isDragging.value = false;
+  const pro =
+    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
+    progressBarRef.value.offsetWidth;
+
+  playerRef.value.currentTime = playerRef.value.duration * pro;
+  updateLyricPosition(playerRef.value.currentTime);
+
+  if (playerTimer.value) {
+    clearInterval(playerTimer.value);
+  }
+  playerTimer.value = setInterval(timer, 1000);
+
+  playState.value = true;
+  playIcon.value = pause;
+
+  if (playerRef.value.currentTime >= playerRef.value.duration) {
+    top.value = 0;
+    o.value = 0;
+    wordIndex.value = 0;
+    wordsTop.value = 0;
+    currentProgress.value = "0%";
+  }
+
+  playerRef.value.play();
+}
+
+// 进度条鼠标离开事件
+function onProgressMouseLeave(): void {
+  isDragging.value = false;
+}
+
+// 更新歌词位置
+function updateLyricPosition(currentTime: number): void {
+  const c_arr = [...wordsTime.value];
+  c_arr.push(currentTime);
+  c_arr.sort((l, r) => l - r);
+  const now_o = c_arr.indexOf(currentTime) - 1;
+  let diff_h = 0;
+
+  const musicWordElements = musicWordsRef.value?.querySelectorAll(".music_word");
+  if (musicWordElements) {
+    if (o.value < now_o) {
+      for (let i = o.value; i < now_o; i++) {
+        if (musicWordElements[i]) {
+          diff_h += -(
+            musicWordElements[i].clientHeight +
+            parseInt(window.getComputedStyle(musicWordElements[i]).marginTop)
+          );
+        }
       }
+    } else {
+      for (let i = now_o; i < o.value; i++) {
+        if (musicWordElements[i]) {
+          diff_h +=
+            musicWordElements[i].clientHeight +
+            parseInt(window.getComputedStyle(musicWordElements[i]).marginTop);
+        }
+      }
+    }
+  }
+
+  wordsTop.value += diff_h;
+  wordIndex.value = o.value = now_o;
+}
+
+function Player(): void {
+  if (!playerRef.value) return;
+
+  playerTimer.value = setInterval(timer, 500);
+
+  // 自动播放控制
+  document.body.addEventListener("click", function playMusicOnce() {
+    if (playerRef.value) {
+      ListPlay(0);
+    }
+    // 移除点击事件监听器，确保只执行一次
+    document.body.removeEventListener("click", playMusicOnce);
+  });
+}
+
+// 监听搜索框的变化
+watch(musicSearchVal, () => {
+  if (musicSearchVal.value === "") {
+    musicSearchList.value = [];
+  } else {
+    getSearchSuggest(musicSearchVal.value).then((res) => {
+      musicSearchList.value = res.data.result.songs || [];
     });
   }
+});
+
+// 页面挂载时初始化播放器
+onMounted(() => {
+  Player();
+});
+
+// 页面创建时初始化数据
+onBeforeMount(() => {
+  ListAdd(2124731026);
+  // ListAdd(167876);
+  DisAuthorInfo(); // 禁删~感谢配合
+});
+
+// 禁删~感谢配合
+function DisAuthorInfo(): void {
+  console.log(
+    "%c音乐播放器作者----与梦，博客地址：https://veweiyi.cn",
+    "background-color:rgb(30,30,30);border-radius:4px;font-size:12px;padding:4px;color:rgb(220,208,129);"
+  );
 }
 </script>
 

@@ -26,8 +26,14 @@
     >
       <template v-slot:dm="{ index, danmu }">
         <span class="danmaku-item">
-          <img :src="danmu.avatar" width="30" height="30" style="border-radius: 50%" alt="" />
-          <span class="ml">{{ danmu.nickname }} :</span>
+          <img
+            :src="danmu.user?.avatar || touristAvatar"
+            width="30"
+            height="30"
+            style="border-radius: 50%"
+            alt=""
+          />
+          <span class="ml">{{ danmu.user?.nickname || getTouristName(danmu.terminal_id) }} :</span>
           <span class="ml">{{ danmu.message_content }}</span>
         </span>
       </template>
@@ -36,15 +42,15 @@
 </template>
 
 <script setup lang="ts">
-import { addRemarkApi, findRemarkListApi } from "@/api/remark";
-import { Remark as Message } from "@/api/types";
+import { RemarkAPI } from "@/api/remark";
+import type { Remark as Message, RemarkNewReq } from "@/api/types";
 import { useBlogStore, useUserStore } from "@/store";
 import vueDanmaku from "vue3-danmaku";
 
 const userStore = useUserStore();
 const blogStore = useBlogStore();
 
-const cover = blogStore.getCover("about");
+const cover = blogStore.getCover("message");
 const config = ref({
   channels: 7, // 轨道数量，为0则弹幕轨道数会撑满容器
   useSlot: true, // 是否开启slot
@@ -62,27 +68,22 @@ const show = ref(false);
 const danmaku = ref();
 const messageList = ref<Message[]>([]);
 onMounted(async () => {
-  findRemarkListApi().then((res) => {
+  RemarkAPI.findRemarkListApi().then((res) => {
     messageList.value = res.data.list;
   });
 });
 const AddMessage = () => {
   if (addMessageContent.value.trim() == "") {
     window.$message?.warning("留言内容不能为空");
-    return false;
+    return;
   }
-  const userAvatar = userStore.userInfo.avatar
-    ? userStore.userInfo.avatar
-    : blogStore.blogInfo.website_config.tourist_avatar;
   const userNickname = userStore.userInfo.nickname ? userStore.userInfo.nickname : "游客";
-  const message = {
-    avatar: userAvatar,
-    nickname: userNickname,
+  const message: RemarkNewReq = {
     message_content: addMessageContent.value,
-    time: Math.floor(Math.random() * (10 - 7)) + 7,
+    // time: Math.floor(Math.random() * (10 - 7)) + 7,
   };
-  addRemarkApi(message).then((res) => {
-    if (blogStore.blogInfo.website_config.is_message_review) {
+  RemarkAPI.addRemarkApi(message).then((res) => {
+    if (blogStore.blogInfo.website_config.website_feature.is_message_review) {
       window.$message?.warning("留言成功，正在审核中");
     } else {
       danmaku.value.push(message);
@@ -90,6 +91,12 @@ const AddMessage = () => {
     }
     addMessageContent.value = "";
   });
+};
+
+const touristAvatar = ref(blogStore.blogInfo.website_config.tourist_avatar);
+
+const getTouristName = (terminal: string) => {
+  return "游客" + btoa(terminal);
 };
 </script>
 
@@ -160,9 +167,6 @@ const AddMessage = () => {
   right: 0;
   bottom: 0;
   width: 100%;
-  background-color: var(--color-blue);
-  background: url("https://static.ttkwsd.top/config/e3408389cb0d4ea1b5f651873dab2a19.jpg") center
-    no-repeat;
   animation: slideDownIn 1s;
 }
 

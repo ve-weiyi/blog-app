@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { useClipboard } from "@vueuse/core";
-import { FormInst, UploadFileInfo } from "naive-ui";
+import type { FormInst, UploadFileInfo } from "naive-ui";
 import { useBlogStore } from "@/store";
 // import { biliUpload } from "@/api/user";
 const blogStore = useBlogStore();

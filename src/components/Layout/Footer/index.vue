@@ -4,12 +4,13 @@
       <a style="font-weight: 500; font-size: 16px">{{ link }}</a>
     </li>
     <p>
-      © {{ formatDate(blogStore.blogInfo.website_config.website_create_time, "YYYY") }} -
+      ©
+      {{ formatDate(blogStore.blogInfo.website_config.website_info.website_create_time, "YYYY") }} -
       {{ new Date().getFullYear() }} By
-      {{ blogStore.blogInfo.website_config.website_author }}
+      {{ blogStore.blogInfo.website_config.website_info.website_author }}
     </p>
     <a href="https://beian.miit.gov.cn/" target="_blank">
-      {{ blogStore.blogInfo.website_config.website_record_no }}
+      {{ blogStore.blogInfo.website_config.website_info.website_record_no }}
     </a>
   </footer>
 </template>

@@ -8,7 +8,7 @@
     :block-scroll="false"
   >
     <div class="login-title">忘记密码</div>
-    <n-input v-model:value="forgetForm.username" class="mt-11" placeholder="邮箱号"></n-input>
+    <n-input v-model:value="forgetForm.email" class="mt-11" placeholder="邮箱号"></n-input>
     <n-input-group class="mt-11">
       <n-input v-model:value="forgetForm.verify_code" placeholder="验证码" />
       <n-button color="#49b1f5" :disabled="flag" @click="sendCode">
@@ -41,8 +41,8 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store";
 import { useIntervalFn } from "@vueuse/core";
-import { resetPasswordApi, sendResetEmailApi } from "@/api/auth";
-import { ResetPasswordReq } from "@/api/types";
+import { AuthAPI } from "@/api/auth";
+import type { ResetPasswordReq } from "@/api/types";
 
 const appStore = useAppStore();
 const data = reactive({
@@ -50,8 +50,9 @@ const data = reactive({
   flag: false,
   loading: false,
   forgetForm: {
-    username: "",
+    email: "",
     password: "",
+    confirm_password: "",
     verify_code: "",
   } as ResetPasswordReq,
 });
@@ -76,12 +77,15 @@ const start = (time: number) => {
 };
 const sendCode = () => {
   let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-  if (!reg.test(forgetForm.value.username)) {
+  if (!reg.test(forgetForm.value.email)) {
     window.$message?.warning("邮箱格式不正确");
     return;
   }
   start(60);
-  sendResetEmailApi(forgetForm.value).then((res) => {
+  AuthAPI.sendEmailVerifyCodeApi({
+    email: forgetForm.value.email,
+    type: "reset_password",
+  }).then((res) => {
     window.$message?.success("发送成功");
   });
 };
@@ -95,11 +99,12 @@ const handleForget = () => {
     return;
   }
   loading.value = true;
-  resetPasswordApi(forgetForm.value).then((res) => {
+  AuthAPI.resetPasswordApi(forgetForm.value).then((res) => {
     window.$message?.success("修改成功");
     forgetForm.value = {
-      username: "",
+      email: "",
       password: "",
+      confirm_password: "",
       verify_code: "",
     };
     appStore.setForgetFlag(false);

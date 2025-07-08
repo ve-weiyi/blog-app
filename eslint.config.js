@@ -1,167 +1,98 @@
-import js from "@eslint/js";
-import pluginVue from "eslint-plugin-vue";
-import * as parserVue from "vue-eslint-parser";
-import configPrettier from "eslint-config-prettier";
-import pluginPrettier from "eslint-plugin-prettier";
-import { defineFlatConfig } from "eslint-define-config";
-import * as parserTypeScript from "@typescript-eslint/parser";
-import pluginTypeScript from "@typescript-eslint/eslint-plugin";
+// https://eslint.nodejs.cn/docs/latest/use/configure/configuration-files
 
-export default defineFlatConfig([
+import globals from "globals";
+import pluginJs from "@eslint/js"; // JavaScript 规则
+import pluginVue from "eslint-plugin-vue"; // Vue 规则
+import pluginTypeScript from "@typescript-eslint/eslint-plugin"; // TypeScript 规则
+import parserVue from "vue-eslint-parser"; // Vue 解析器
+import parserTypeScript from "@typescript-eslint/parser"; // TypeScript 解析器
+import configPrettier from "eslint-config-prettier"; // 禁用与 Prettier 冲突的规则
+import pluginPrettier from "eslint-plugin-prettier"; // 运行 Prettier 规则
+// 解析自动导入配置
+import fs from "fs";
+
+const autoImportConfig = JSON.parse(fs.readFileSync(".eslintrc-auto-import.json", "utf-8"));
+
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+  // 指定检查文件和忽略文件
   {
-    ...js.configs.recommended,
-    ignores: ["**/.*", "dist/*", "*.d.ts", "public/*", "src/assets/**", "src/**/iconfont/**"],
+    files: ["**/*.{js,mjs,cjs,ts,vue}"],
+    ignores: ["**/*.d.ts"],
+  },
+  // 全局配置
+  {
     languageOptions: {
       globals: {
-        // index.d.ts
-        RefType: "readonly",
-        EmitType: "readonly",
-        TargetContext: "readonly",
-        ComponentRef: "readonly",
-        ElRef: "readonly",
-        ForDataType: "readonly",
-        AnyFunction: "readonly",
-        PropType: "readonly",
-        Writable: "readonly",
-        Nullable: "readonly",
-        NonNullable: "readonly",
-        Recordable: "readonly",
-        ReadonlyRecordable: "readonly",
-        Indexable: "readonly",
-        DeepPartial: "readonly",
-        Without: "readonly",
-        Exclusive: "readonly",
-        TimeoutHandle: "readonly",
-        IntervalHandle: "readonly",
-        Effect: "readonly",
-        ChangeEvent: "readonly",
-        WheelEvent: "readonly",
-        ImportMetaEnv: "readonly",
-        Fn: "readonly",
-        PromiseFn: "readonly",
-        ComponentElRef: "readonly",
-        parseInt: "readonly",
-        parseFloat: "readonly",
+        ...globals.browser,
+        ...globals.node,
+        ...autoImportConfig.globals,
+        ...{
+          PageQuery: "readonly",
+          PageResult: "readonly",
+          OptionType: "readonly",
+          ResponseData: "readonly",
+          ExcelResult: "readonly",
+          TagView: "readonly",
+          AppSettings: "readonly",
+          __APP_INFO__: "readonly",
+        },
       },
     },
-    plugins: {
-      prettier: pluginPrettier,
-    },
+    plugins: { prettier: pluginPrettier },
     rules: {
-      ...configPrettier.rules,
-      ...pluginPrettier.configs.recommended.rules,
-      "no-debugger": "off",
+      ...configPrettier.rules, // 关闭与 Prettier 冲突的规则
+      ...pluginPrettier.configs.recommended.rules, // 启用 Prettier 规则
+      "prettier/prettier": "error", // 强制 Prettier 格式化
       "no-unused-vars": [
-        "warn",
+        "error",
         {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
+          argsIgnorePattern: "^_", // 忽略参数名以 _ 开头的参数未使用警告
+          varsIgnorePattern: "^[A-Z0-9_]+$", // 忽略变量名为大写字母、数字或下划线组合的未使用警告（枚举定义未使用场景）
+          ignoreRestSiblings: true, // 忽略解构赋值中同级未使用变量的警告
         },
       ],
-      "prettier/prettier": ["warn"],
     },
   },
+  // JavaScript 配置
+  pluginJs.configs.recommended,
+
+  // TypeScript 配置
   {
-    files: ["**/*.?([cm])ts", "**/*.?([cm])tsx"],
+    files: ["**/*.ts"],
+    ignores: ["**/*.d.ts"], // 排除d.ts文件
     languageOptions: {
       parser: parserTypeScript,
       parserOptions: {
         sourceType: "module",
       },
     },
-    plugins: {
-      "@typescript-eslint": pluginTypeScript,
-    },
+    plugins: { "@typescript-eslint": pluginTypeScript },
     rules: {
-      ...pluginTypeScript.configs.strict.rules,
-      "@typescript-eslint/ban-types": "off",
-      "@typescript-eslint/no-redeclare": "error",
-      "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/prefer-as-const": "warn",
-      "@typescript-eslint/no-empty-function": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { disallowTypeAnnotations: false, fixStyle: "inline-type-imports" },
-      ],
-      "@typescript-eslint/prefer-literal-enum-member": ["error", { allowBitwiseExpressions: true }],
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-        },
-      ],
+      ...pluginTypeScript.configs.strict.rules, // TypeScript 严格规则
+      "@typescript-eslint/no-explicit-any": "off", // 允许使用 any
+      "@typescript-eslint/no-empty-function": "off", // 允许空函数
+      "@typescript-eslint/no-empty-object-type": "off", // 允许空对象类型
     },
   },
-  {
-    files: ["**/*.d.ts"],
-    rules: {
-      "eslint-comments/no-unlimited-disable": "off",
-      "import/no-duplicates": "off",
-      "unused-imports/no-unused-vars": "off",
-    },
-  },
-  {
-    files: ["**/*.?([cm])js"],
-    rules: {
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-var-requires": "off",
-    },
-  },
+
+  // Vue 配置
   {
     files: ["**/*.vue"],
     languageOptions: {
-      globals: {
-        $: "readonly",
-        $$: "readonly",
-        $computed: "readonly",
-        $customRef: "readonly",
-        $ref: "readonly",
-        $shallowRef: "readonly",
-        $toRef: "readonly",
-      },
       parser: parserVue,
       parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-        extraFileExtensions: [".vue"],
-        parser: "@typescript-eslint/parser",
+        parser: parserTypeScript,
         sourceType: "module",
       },
     },
-    plugins: {
-      vue: pluginVue,
-    },
+    plugins: { vue: pluginVue, "@typescript-eslint": pluginTypeScript },
     processor: pluginVue.processors[".vue"],
     rules: {
-      ...pluginVue.configs.base.rules,
-      ...pluginVue.configs["vue3-essential"].rules,
-      ...pluginVue.configs["vue3-recommended"].rules,
-      "no-undef": "off",
-      "no-unused-vars": "off",
-      "vue/no-unused-vars": "warn",
-      "vue/no-v-html": "off",
-      "vue/require-default-prop": "off",
-      "vue/require-explicit-emits": "off",
-      "vue/multi-word-component-names": "off",
-      "vue/no-setup-props-reactivity-loss": "off",
-      "vue/html-self-closing": [
-        "off",
-        {
-          html: {
-            void: "always",
-            normal: "always",
-            component: "always",
-          },
-          svg: "always",
-          math: "always",
-        },
-      ],
+      ...pluginVue.configs["vue3-recommended"].rules, // Vue 3 推荐规则
+      "vue/no-v-html": "off", // 允许 v-html
+      "vue/multi-word-component-names": "off", // 允许单个单词组件名
+      "vue/attributes-order": "off", // 强制属性排序
     },
   },
-]);
+];

@@ -21,13 +21,13 @@
 <script setup lang="ts">
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
-import { findTalkListApi } from "@/api/talk";
-import { Talk } from "@/api/types";
+import { TalkAPI } from "@/api/talk";
+import type { Talk } from "@/api/types";
 // 自动播放
 const modules = [Autoplay];
 const talkList = ref<Talk[]>([]);
 onMounted(() => {
-  findTalkListApi().then((res) => {
+  TalkAPI.findTalkListApi().then((res) => {
     talkList.value = res.data.list;
   });
 });

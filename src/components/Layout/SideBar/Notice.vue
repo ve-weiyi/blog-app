@@ -6,7 +6,10 @@
       公告
     </div>
     <!-- 公告内容 -->
-    <div class="notice-content" v-html="blogStore.blogInfo.website_config.website_notice"></div>
+    <div
+      class="notice-content"
+      v-html="blogStore.blogInfo.website_config.website_info.website_notice"
+    ></div>
   </div>
 </template>
 

@@ -62,8 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { findArticleHomeListApi } from "@/api/article";
-import { ArticleHome, ArticleHomeQueryReq } from "@/api/types";
+import { ArticleAPI } from "@/api/article";
+import type { ArticleHome, ArticleHomeQueryReq } from "@/api/types";
 
 import { formatDate } from "@/utils/date";
 
@@ -79,14 +79,14 @@ const { count, queryParams, articleList } = toRefs(data);
 watch(
   () => queryParams.value.page,
   () => {
-    findArticleHomeListApi(queryParams.value).then((res) => {
+    ArticleAPI.findArticleHomeListApi(queryParams.value).then((res) => {
       articleList.value = res.data.list;
       count.value = res.data.total;
     });
   }
 );
 onMounted(() => {
-  findArticleHomeListApi(queryParams.value).then((res) => {
+  ArticleAPI.findArticleHomeListApi(queryParams.value).then((res) => {
     articleList.value = res.data.list;
     count.value = res.data.total;
   });

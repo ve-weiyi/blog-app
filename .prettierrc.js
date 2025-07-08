@@ -28,6 +28,8 @@ export default {
   jsxSingleQuote: false,
   //将 html 开始标签的后面一个 > 放在最后一行的末尾，而不是单独一行。
   jsxBracketSameLine: false,
+  //每个属性单独占一行
+  singleAttributePerLine: false,
   //指定对 HTML, Vue, Angular, and Handlebars 文件中的空格保持敏感。 css 遵循css|strict 保留|ignore 忽略
   htmlWhitespaceSensitivity: "css",
   //vue 文件中，是否给 script 和 style 内的代码添加缩进。

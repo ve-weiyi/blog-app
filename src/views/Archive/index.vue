@@ -31,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { findArticleArchivesApi } from "@/api/article";
-import { ArticleArchivesQueryReq, ArticlePreview } from "@/api/types";
+import { ArticleAPI } from "@/api/article";
+import type { ArticleArchivesQueryReq, ArticlePreview } from "@/api/types";
 import Pagination from "@/components/Pagination/index.vue";
 
 import { formatDate } from "@/utils/date";
@@ -53,14 +53,14 @@ const { count, queryParams, archivesList } = toRefs(data);
 watch(
   () => queryParams.value.page,
   () => {
-    findArticleArchivesApi(queryParams.value).then((res) => {
+    ArticleAPI.findArticleArchivesApi(queryParams.value).then((res) => {
       archivesList.value = res.data.list;
       count.value = res.data.total;
     });
   }
 );
 onMounted(() => {
-  findArticleArchivesApi(queryParams.value).then((res) => {
+  ArticleAPI.findArticleArchivesApi(queryParams.value).then((res) => {
     archivesList.value = res.data.list;
     count.value = res.data.total;
   });

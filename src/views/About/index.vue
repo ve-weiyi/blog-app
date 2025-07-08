@@ -7,7 +7,10 @@
   <div class="bg">
     <div class="page-container">
       <div class="avatar-box">
-        <img class="author-avatar" :src="blogStore.blogInfo.website_config.website_avatar" />
+        <img
+          class="author-avatar"
+          :src="blogStore.blogInfo.website_config.website_info.website_avatar"
+        />
       </div>
       <v-md-preview class="md" :text="aboutContent"></v-md-preview>
     </div>
@@ -16,7 +19,7 @@
 
 <script setup lang="ts">
 import { useBlogStore } from "@/store";
-import { getAboutMeApi } from "@/api/website";
+import { WebsiteAPI } from "@/api/website";
 
 const blogStore = useBlogStore();
 
@@ -24,7 +27,7 @@ const cover = blogStore.getCover("about");
 const aboutContent = ref("");
 
 const getAboutContent = () => {
-  getAboutMeApi().then((res) => {
+  WebsiteAPI.getAboutMeApi().then((res) => {
     aboutContent.value = res.data.content;
   });
 };

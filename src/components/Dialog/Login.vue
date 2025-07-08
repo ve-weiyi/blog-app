@@ -38,28 +38,15 @@
     <div>
       <div class="social-login-title">社交账号登录</div>
       <div class="social-login-wrapper">
-        <svg-icon
-          v-if="showLogin('qq')"
-          class="icon"
-          icon-class="qq"
-          size="2rem"
-          color="#00aaee"
-          @click="oauthLogin('qq')"
-        ></svg-icon>
-        <svg-icon
-          v-if="showLogin('gitee')"
-          class="icon"
-          icon-class="gitee"
-          size="2rem"
-          @click="oauthLogin('gitee')"
-        ></svg-icon>
-        <svg-icon
-          v-if="showLogin('github')"
-          class="icon"
-          icon-class="github"
-          size="2rem"
-          @click="oauthLogin('github')"
-        ></svg-icon>
+        <template v-for="item in thirdPlatformList" :key="item.platform">
+          <svg-icon
+            v-if="item.enabled"
+            class="icon"
+            :icon-class="item.platform"
+            size="2rem"
+            @click="oauthLogin(item.platform)"
+          />
+        </template>
       </div>
     </div>
   </n-modal>
@@ -67,8 +54,8 @@
 
 <script setup lang="ts">
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { oauthAuthorizeUrlApi } from "@/api/auth";
-import { LoginReq, OauthLoginReq } from "@/api/types";
+import { AuthAPI } from "@/api/auth";
+import type { GetOauthAuthorizeUrlReq, LoginReq } from "@/api/types";
 
 const appStore = useAppStore();
 const userStore = useUserStore();
@@ -83,9 +70,11 @@ const dialogVisible = computed({
   get: () => appStore.loginFlag,
   set: (value) => (appStore.loginFlag = value),
 });
-const showLogin = computed(
-  () => (type: string) => blogStore.blogInfo.website_config.social_login_list.includes(type)
-);
+
+const thirdPlatformList = computed(() => {
+  return blogStore.blogInfo.website_config.social_login_list;
+});
+
 const handleRegister = () => {
   appStore.setLoginFlag(false);
   appStore.setRegisterFlag(true);
@@ -96,24 +85,23 @@ const handleForget = () => {
 };
 
 const oauthLogin = (platform: string) => {
-  const oauth: OauthLoginReq = {
+  const oauth: GetOauthAuthorizeUrlReq = {
     platform: platform,
     state: route.path,
   };
-  oauthAuthorizeUrlApi(oauth).then((res) => {
+  AuthAPI.getOauthAuthorizeUrlApi(oauth).then((res) => {
     appStore.setLoginFlag(false);
-    console.log(res.data.url);
+    console.log(res.data.authorize_url);
     // 新启页面跳转
     // window.open(res.data.url);
 
     // 当前页面跳转
-    window.location.href = res.data.url;
+    window.location.href = res.data.authorize_url;
   });
 };
 const handleLogin = () => {
-  let reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-  if (!reg.test(loginForm.value.username)) {
-    window.$message?.warning("邮箱格式不正确");
+  if (loginForm.value.username.trim().length == 0) {
+    window.$message?.warning("用户名最小长度是6");
     return;
   }
   if (loginForm.value.password.trim().length == 0) {

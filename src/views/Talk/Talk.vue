@@ -8,14 +8,14 @@
     <div v-if="talk" class="page-container">
       <div class="talk-item">
         <div class="talk-meta">
-          <img class="user-avatar" :src="talk.avatar" />
+          <img class="user-avatar" :src="talk.user?.avatar" />
         </div>
         <div class="talk-content-wrap">
           <div class="talk-info">
-            <span class="talk-user-name"
-              >{{ talk.nickname
-              }}<svg-icon icon-class="badge" style="margin-left: 0.4rem"></svg-icon
-            ></span>
+            <span class="talk-user-name">
+              {{ talk.user?.nickname }}
+              <svg-icon icon-class="badge" style="margin-left: 0.4rem"></svg-icon>
+            </span>
             <span class="talk-time">{{ formatDateTime(talk.created_at) }}</span>
           </div>
           <div class="talk-content" v-html="talk.content"></div>
@@ -51,8 +51,8 @@
 </template>
 
 <script setup lang="ts">
-import { getTalkApi, likeTalkApi } from "@/api/talk";
-import { Talk } from "@/api/types";
+import { TalkAPI } from "@/api/talk";
+import type { Talk } from "@/api/types";
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
 import { formatDateTime } from "@/utils/date";
 
@@ -78,20 +78,20 @@ const like = () => {
     return;
   }
   let id = talk.value.id;
-  likeTalkApi({ id }).then((res) => {
+  TalkAPI.likeTalkApi({ id }).then((res) => {
     //判断是否点赞
     if (userStore.isTalkLike(id)) {
       window.$message?.error("取消点赞成功");
-      talk.value.like_count --;
+      talk.value.like_count--;
     } else {
       window.$message?.success("点赞成功");
-      talk.value.like_count ++;
+      talk.value.like_count++;
     }
     userStore.talkLike(id);
   });
 };
 onMounted(() => {
-  getTalkApi({ id: Number(route.params.id) }).then((res) => {
+  TalkAPI.getTalkApi({ id: Number(route.params.id) }).then((res) => {
     talk.value = res.data;
   });
 });

@@ -3,34 +3,14 @@ import MD5 from "crypto-js/md5";
 import { useUserStore } from "@/store";
 import { getTerminalId, getToken, getUid } from "./token";
 
+const HeaderAppName = "App-Name";
+const HeaderTimestamp = "Timestamp";
+const HeaderXTerminalId = "X-Terminal-Id";
+const HeaderXTerminalTsToken = "X-Terminal-Token";
+
 const HeaderUid = "Uid";
 const HeaderToken = "Token";
 const HeaderAuthorization = "Authorization";
-
-const HeaderXAuthToken = "X-Auth-Token";
-const HeaderTerminal = "Terminal";
-const HeaderTimestamp = "Timestamp";
-
-function addUserToken(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-  config.headers = Object.assign({}, config.headers, {
-    [HeaderUid]: getUid(),
-    [HeaderToken]: getToken(),
-  });
-
-  return config;
-}
-
-function addTimeToken(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-  const dv = getTerminalId() || "";
-  const ts = Math.floor(Date.now() / 1000).toString();
-  config.headers = Object.assign({}, config.headers, {
-    [HeaderTerminal]: dv,
-    [HeaderTimestamp]: ts,
-    [HeaderXAuthToken]: MD5(dv + ts).toString(),
-  });
-
-  return config;
-}
 
 const requests = axios.create({
   baseURL: "",
@@ -44,11 +24,24 @@ const requests = axios.create({
 
 // 请求拦截器
 requests.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // 请求带token
-    addUserToken(config);
-    addTimeToken(config);
+  async (config: InternalAxiosRequestConfig) => {
+    // 请求携带用户token
+    const token = getToken();
+    const uid = getUid();
 
+    // 请求携带游客token
+    const terminalId = getTerminalId() || "";
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const xtoken = MD5(terminalId + timestamp).toString();
+
+    config.headers = Object.assign({}, config.headers, {
+      [HeaderAppName]: "blog-web",
+      [HeaderTimestamp]: timestamp,
+      [HeaderXTerminalId]: terminalId,
+      [HeaderXTerminalTsToken]: xtoken,
+      [HeaderUid]: uid,
+      [HeaderToken]: token,
+    });
     return config;
   },
   (error: AxiosError) => {
@@ -64,7 +57,7 @@ requests.interceptors.response.use(
       return response;
     }
 
-    const { code, data, message } = response.data;
+    const { code, data, message: msg } = response.data;
 
     // 接口错误码
     switch (code) {
@@ -72,25 +65,26 @@ requests.interceptors.response.use(
         break;
       case 401:
         window.$message?.error("用户未登录");
-        return Promise.reject(message);
+        return Promise.reject(msg);
       case 402:
         const userStore = useUserStore();
         userStore.forceLogOut();
-        window.$message?.error(message);
-        return Promise.reject(message);
+        window.$message?.error(msg);
+        return Promise.reject(msg);
       case 403:
-        window.$message?.error(message);
-        return Promise.reject(message);
+        window.$message?.error(msg);
+        return Promise.reject(msg);
       case 500:
-        window.$message?.error(message);
-        return Promise.reject(message);
+        window.$message?.error(msg);
+        return Promise.reject(msg);
       default:
-        window.$message?.error(message || "系统出错");
-        return Promise.reject(new Error(message || "Error"));
+        window.$message?.error(msg || "系统出错");
+        return Promise.reject(new Error(msg || "Error"));
     }
     return response.data;
   },
   (error: AxiosError) => {
+    console.error("request error", error); // for debug
     let { message } = error;
     if (message == "Network Error") {
       message = "后端接口连接异常";

@@ -1,112 +1,138 @@
 import request from "@/utils/request";
-import {
-  BindUserEmailReq,
+import type {
+  EmailLoginReq,
   EmptyReq,
   EmptyResp,
+  GetCaptchaCodeReq,
+  GetCaptchaCodeResp,
+  GetOauthAuthorizeUrlReq,
+  GetOauthAuthorizeUrlResp,
+  GetTouristInfoResp,
   LoginReq,
   LoginResp,
-  OauthLoginReq,
-  OauthLoginUrlResp,
+  PhoneLoginReq,
   RegisterReq,
   ResetPasswordReq,
-  UserEmailReq,
+  SendEmailVerifyCodeReq,
+  SendPhoneVerifyCodeReq,
+  ThirdLoginReq,
 } from "./types";
 
-/** 登录 */
-export function loginApi(data?: LoginReq): Promise<IApiResponse<LoginResp>> {
-  return request({
-    url: "/api/v1/login",
-    method: "POST",
-    data: data,
-  });
-}
+export const AuthAPI = {
+  /** 获取游客身份信息 */
+  getTouristInfoApi(data?: EmptyReq): Promise<IApiResponse<GetTouristInfoResp>> {
+    return request({
+      url: "/blog-api/v1/get_tourist_info",
+      method: "GET",
+      data: data,
+    });
+  },
 
-/** 第三方登录授权地址 */
-export function oauthAuthorizeUrlApi(data?: OauthLoginReq): Promise<IApiResponse<OauthLoginUrlResp>> {
-  return request({
-    url: "/api/v1/oauth_authorize_url",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 邮箱登录 */
+  emailLoginApi(data?: EmailLoginReq): Promise<IApiResponse<LoginResp>> {
+    return request({
+      url: "/blog-api/v1/email_login",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 第三方登录 */
-export function oauthLoginApi(data?: OauthLoginReq): Promise<IApiResponse<LoginResp>> {
-  return request({
-    url: "/api/v1/oauth_login",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 获取验证码 */
+  getCaptchaCodeApi(data?: GetCaptchaCodeReq): Promise<IApiResponse<GetCaptchaCodeResp>> {
+    return request({
+      url: "/blog-api/v1/get_captcha_code",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 注册 */
-export function registerApi(data?: RegisterReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/register",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 第三方登录授权地址 */
+  getOauthAuthorizeUrlApi(data?: GetOauthAuthorizeUrlReq): Promise<IApiResponse<GetOauthAuthorizeUrlResp>> {
+    return request({
+      url: "/blog-api/v1/get_oauth_authorize_url",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 发送注册账号邮件 */
-export function sendRegisterEmailApi(data?: UserEmailReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/send_register_email",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 登录 */
+  loginApi(data?: LoginReq): Promise<IApiResponse<LoginResp>> {
+    return request({
+      url: "/blog-api/v1/login",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 重置密码 */
-export function resetPasswordApi(data?: ResetPasswordReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/user/reset_password",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 手机登录 */
+  phoneLoginApi(data?: PhoneLoginReq): Promise<IApiResponse<LoginResp>> {
+    return request({
+      url: "/blog-api/v1/phone_login",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 发送重置密码邮件 */
-export function sendResetEmailApi(data?: UserEmailReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/user/send_reset_email",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 注册 */
+  registerApi(data?: RegisterReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/register",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 绑定邮箱 */
-export function bindUserEmailApi(data?: BindUserEmailReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/bind_user_email",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 重置密码 */
+  resetPasswordApi(data?: ResetPasswordReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/reset_password",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 注销 */
-export function logoffApi(data?: EmptyReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/logoff",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 发送邮件验证码 */
+  sendEmailVerifyCodeApi(data?: SendEmailVerifyCodeReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/send_email_verify_code",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 登出 */
-export function logoutApi(data?: EmptyReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/logout",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 发送手机验证码 */
+  sendPhoneVerifyCodeApi(data?: SendPhoneVerifyCodeReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/send_phone_verify_code",
+      method: "POST",
+      data: data,
+    });
+  },
 
-/** 发送绑定邮箱验证码 */
-export function sendBindEmailApi(data?: UserEmailReq): Promise<IApiResponse<EmptyResp>> {
-  return request({
-    url: "/api/v1/send_bind_email",
-    method: "POST",
-    data: data,
-  });
-}
+  /** 第三方登录 */
+  thirdLoginApi(data?: ThirdLoginReq): Promise<IApiResponse<LoginResp>> {
+    return request({
+      url: "/blog-api/v1/third_login",
+      method: "POST",
+      data: data,
+    });
+  },
+
+  /** 注销 */
+  logoffApi(data?: EmptyReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/logoff",
+      method: "POST",
+      data: data,
+    });
+  },
+
+  /** 登出 */
+  logoutApi(data?: EmptyReq): Promise<IApiResponse<EmptyResp>> {
+    return request({
+      url: "/blog-api/v1/logout",
+      method: "POST",
+      data: data,
+    });
+  },
+};

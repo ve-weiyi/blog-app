@@ -13,13 +13,14 @@
 
 <script setup lang="ts">
 import { useBlogStore } from "@/store";
-import dayjs from "dayjs";
 
 const blogStore = useBlogStore();
 const runTime = ref("");
 setInterval(() => {
-  const days = dayjs().diff(blogStore.blogInfo.website_config.website_create_time, "days");
   const day = new Date();
+  const createTime = new Date(blogStore.blogInfo.website_config.website_info.website_create_time);
+  const diffTime = day.getTime() - createTime.getTime();
+  const days = Math.floor(diffTime / (24 * 60 * 60 * 1000));
   let str = "";
   str += days + "天";
   str += day.getHours() + "时";
@@ -29,9 +30,9 @@ setInterval(() => {
 }, 1000);
 const webInfo = computed(() => {
   return [
+    { name: "总访问量", count: blogStore.blogInfo.total_page_view_count },
     { name: "文章数目", count: blogStore.blogInfo.article_count },
     { name: "运行时长", count: runTime },
-    { name: "总访问量", count: blogStore.blogInfo.views_count },
   ];
 });
 </script>

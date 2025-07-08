@@ -1,6 +1,5 @@
-import type { GetBlogHomeInfoResp, ReportResp, WebsiteConfigDTO } from "@/api/types";
-import { getBlogHomeInfoApi, reportApi } from "@/api/website.ts";
-import { getTerminalId, setTerminalId } from "@/utils/token.ts";
+import type { GetBlogHomeInfoResp, WebsiteConfigVO } from "@/api/types";
+import { WebsiteAPI } from "@/api/website.ts";
 
 /**
  * 博客
@@ -15,28 +14,26 @@ interface BlogState {
 export const useBlogStore = defineStore("useBlogStore", {
   state: (): BlogState => ({
     blogInfo: {
-      website_config: {} as WebsiteConfigDTO,
+      website_config: {
+        website_info: {
+          website_name: "Blog",
+        },
+        website_feature: {
+          is_chat_room: 1,
+          is_comment_review: 0,
+          is_email_notice: 1,
+          is_message_review: 0,
+          is_music_player: 1,
+          is_reward: 0,
+        },
+      } as WebsiteConfigVO,
       page_list: [],
     } as GetBlogHomeInfoResp,
   }),
   actions: {
-    report(): Promise<IApiResponse<ReportResp>> {
-      return new Promise((resolve, reject) => {
-        reportApi()
-          .then((res) => {
-            setTerminalId(res.data.terminal_id)
-            getTerminalId()
-            resolve(res);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    },
-
     getBlogInfo(): Promise<IApiResponse<GetBlogHomeInfoResp>> {
       return new Promise((resolve, reject) => {
-        getBlogHomeInfoApi()
+        WebsiteAPI.getBlogHomeInfoApi()
           .then((res) => {
             this.blogInfo = res.data;
             resolve(res);
@@ -46,14 +43,29 @@ export const useBlogStore = defineStore("useBlogStore", {
           });
       });
     },
-    getCover(page: string) {
+    getCover(page: string): string {
       const cover = this.blogInfo.page_list.find(
         (item: any) => item.page_label === page
       )?.page_cover;
-      return cover ? cover : "https://veport.oss-cn-beijing.aliyuncs.com/background/zhuqu.jpg";
+      return cover ? cover : "https://static.veweiyi.cn/blog/cover/zhuque.jpg";
     },
-    getCarouselList() {
-      return this.blogInfo.page_list.filter((item) => item.is_carousel === 1);
+    getCarouselList(): string[] {
+      if (this.blogInfo.page_list.length == 0) {
+        return [
+          "https://static.veweiyi.cn/blog/cover/qinglong.jpg",
+          "https://static.veweiyi.cn/blog/cover/baihu.jpg",
+          "https://static.veweiyi.cn/blog/cover/zhuque.jpg",
+          "https://static.veweiyi.cn/blog/cover/xuanwu.jpg",
+          "https://static.veweiyi.cn/blog/cover/qilin.jpg",
+          "https://static.veweiyi.cn/blog/cover/wusheng.jpg",
+        ];
+      }
+
+      return this.blogInfo.page_list
+        .filter((item) => item.is_carousel === 1)
+        .map((item) => {
+          return item.page_cover;
+        });
     },
   },
   getters: {},

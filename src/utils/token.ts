@@ -1,5 +1,9 @@
 export function clearStorage() {
-  localStorage.clear();
+  // localStorage.clear();
+
+  // TerminalId 不能清理，否则会使接口调用失败
+  localStorage.removeItem(TokenKey);
+  localStorage.removeItem(UidKey);
 }
 
 const TokenKey: string = "Token";

@@ -15,11 +15,7 @@
           class="chat-item"
           :class="isMy(chat) ? 'my-chat' : ''"
         >
-          <img
-            class="user-avatar"
-            :src="chat.avatar || blogStore.blogInfo.website_config.tourist_avatar"
-            alt=""
-          />
+          <img class="user-avatar" :src="chat.avatar || defaultAvatar" alt="" />
           <div :class="isMy(chat) ? 'right-info' : 'left-info'">
             <div class="user-info" :class="isMy(chat) ? 'my-chat' : ''">
               <span style="color: var(--color-red)">{{ chat.nickname || chat.ip_address }}</span>
@@ -35,7 +31,7 @@
               :class="isMy(chat) ? 'my-content' : ''"
               @contextmenu.prevent.stop="showBack(chat, index, $event)"
             >
-              <div v-html="chat.chat_content"></div>
+              <div v-html="chat.content"></div>
               <div ref="backBtn" class="back-menu" @click="back(chat, index)">撤回</div>
             </div>
           </div>
@@ -64,19 +60,19 @@ import { useBlogStore, useUserStore } from "@/store";
 import { formatDateTime } from "@/utils/date";
 import { emojiList } from "@/utils/emoji";
 import { tvList } from "@/utils/tv";
-import { ChatRecordResp, ReceiveMsg, ReplyMsg, SendMessageReq } from "@/api/types";
+import type { ChatMessageEvent, MessageEvent } from "@/api/types";
 import chatroom from "@/assets/images/chatroom.png";
+import { Client, type IMessage } from "@stomp/stompjs";
+import { getTerminalId, getToken, getUid } from "@/utils/token.ts";
 
 const userStore = useUserStore();
 const blogStore = useBlogStore();
 const data = reactive({
   show: false,
-  ipAddress: "",
-  recordList: [] as ChatRecordResp[],
+  recordList: [] as ChatMessageEvent[],
   chatContent: "",
   emojiType: 0,
   unreadCount: 0,
-  webSocketState: false,
   onlineCount: 0,
 });
 
@@ -89,102 +85,179 @@ enum Type {
   CLIENT_INFO = 6, // 客户端信息
 }
 
-const {
-  show,
-  recordList,
-  ipAddress,
-  chatContent,
-  emojiType,
-  unreadCount,
-  webSocketState,
-  onlineCount,
-} = toRefs(data);
-const websocketMessage = reactive<ReceiveMsg>({
-  type: 0,
-  data: "",
-  timestamp: 0,
-});
-const backBtn = ref<any>([]);
-const websocket = ref<WebSocket>();
-const timeout = ref<NodeJS.Timeout>();
-const serverTimeout = ref<NodeJS.Timeout>();
+const { show, recordList, chatContent, emojiType, unreadCount, onlineCount } = toRefs(data);
+
+const stompClient = ref<Client>();
+const subscription = ref();
+const chatTopic = "/topic/chatroom"; // 改成你服务端广播的订阅路径
+
+const defaultAvatar = ref(blogStore.blogInfo.website_config.tourist_avatar);
+
+const clientInfo = {
+  ip_address: "",
+  ip_source: "",
+};
+
 const isMy = computed(
-  () => (chat: ChatRecordResp) =>
-    chat.ip_address == ipAddress.value ||
+  () => (chat: ChatMessageEvent) =>
+    chat.ip_address == clientInfo.ip_address ||
     (chat.user_id !== "" && chat.user_id === userStore.userInfo.user_id)
 );
-const userNickname = computed(() =>
-  userStore.userInfo.nickname ? userStore.userInfo.nickname : ipAddress.value
-);
-const userAvatar = computed(() =>
-  userStore.userInfo.avatar
-    ? userStore.userInfo.avatar
-    : blogStore.blogInfo.website_config.tourist_avatar
-);
+
+// 打开聊天面板
 const handleOpen = () => {
-  if (websocket.value === undefined) {
-    let url =
-      import.meta.env.VITE_WEBSOCKET_PROXY_URL || blogStore.blogInfo.website_config.websocket_url;
-    console.log(url);
-    websocket.value = new WebSocket(url);
-    websocket.value.onopen = () => {
-      webSocketState.value = true;
-      startHeart();
-      getHistoryRecord();
-    };
-    websocket.value.onmessage = (event: MessageEvent) => {
-      const res: ReplyMsg = JSON.parse(event.data);
-      console.log("websocket msg", res);
-      switch (res.type) {
-        case Type.CLIENT_INFO:
-          const info = JSON.parse(res.data);
-          ipAddress.value = info.ip_address;
-          break;
-        case Type.ONLINE_COUNT:
-          // 在线人数
-          const online = JSON.parse(res.data);
-          onlineCount.value = online.count;
-          break;
-        case Type.HISTORY_RECORD:
-          recordList.value = JSON.parse(res.data);
-          break;
-        case Type.SEND_MESSAGE:
-          let record = JSON.parse(res.data);
-          recordList.value.push(record);
-          if (!show.value) {
-            unreadCount.value++;
-          }
-          break;
-        case Type.RECALL_MESSAGE:
-          for (let i = 0; i < recordList.value.length; i++) {
-            if (recordList.value[i].id === parseInt(res.data)) {
-              recordList.value.splice(i, 1);
-              i--;
-            }
-          }
-          break;
-        case Type.HEART_BEAT:
-          webSocketState.value = true;
-          break;
-      }
-    };
-    websocket.value.onclose = () => {
-      alert("关闭连接");
-      webSocketState.value = false;
-      clear();
-    };
+  if (!stompClient.value || !stompClient.value.connected) {
+    initStomp();
   }
   unreadCount.value = 0;
   show.value = !show.value;
 };
-// 展示菜单
-const showBack = (chat: ChatRecordResp, index: number, e: any) => {
+
+// 初始化 STOMP 客户端
+const initStomp = () => {
+  const url =
+    import.meta.env.VITE_APP_WS_ENDPOINT || blogStore.blogInfo.website_config.websocket_url;
+  stompClient.value = new Client({
+    connectHeaders: {
+      login: getUid(),
+      passcode: getToken(),
+    },
+    brokerURL: url,
+    reconnectDelay: 5000,
+    heartbeatIncoming: 10000,
+    heartbeatOutgoing: 10000,
+    onConnect() {
+      subscription.value = stompClient.value?.subscribe(chatTopic, handleMessage, {});
+    },
+    onWebSocketClose() {
+      console.warn("连接关闭");
+    },
+    onStompError(frame) {
+      console.error("STOMP 错误", frame);
+    },
+  });
+
+  stompClient.value.activate();
+};
+
+// 接收消息
+const handleMessage = (message: IMessage) => {
+  if (!message.body) return;
+  const res: MessageEvent = JSON.parse(message.body);
+  switch (res.type) {
+    case 1: // ONLINE_COUNT
+      onlineCount.value = JSON.parse(res.data).count;
+      break;
+    case 2: // HISTORY_RECORD
+      recordList.value = JSON.parse(res.data).list;
+      break;
+    case 3: // SEND_MESSAGE
+      const record = JSON.parse(res.data);
+      recordList.value.push(record);
+      if (!show.value) {
+        unreadCount.value++;
+      }
+      break;
+    case 4: // RECALL_MESSAGE
+      const recall = JSON.parse(res.data);
+      recordList.value = recordList.value.filter((item) => item.id !== recall.id);
+      break;
+    case 6: // CLIENT_INFO
+      clientInfo.ip_address = JSON.parse(res.data).ip_address;
+      clientInfo.ip_source = JSON.parse(res.data).ip_source;
+      break;
+  }
+};
+
+// 发送消息
+const handleSend = () => {
+  if (chatContent.value.trim() === "") {
+    window.$message?.error("内容不能为空");
+    return;
+  }
+  chatContent.value = chatContent.value.replace(/\[.+?\]/g, (str) => {
+    if (emojiType.value === 0 && emojiList[str]) {
+      return `<img src="${emojiList[str]}" width="21" height="21" style="margin: 0 1px;vertical-align: text-bottom"/>`;
+    }
+    if (emojiType.value === 1 && tvList[str]) {
+      return `<img src="${tvList[str]}" width="21" height="21" style="margin: 0 1px;vertical-align: text-bottom"/>`;
+    }
+    return str;
+  });
+
+  let chat: ChatMessageEvent = {
+    id: 0,
+    type: "text",
+    content: chatContent.value,
+    user_id: userStore.userInfo.user_id,
+    terminal_id: getTerminalId(),
+    nickname: userStore.userInfo.nickname || clientInfo.ip_address,
+    avatar: userStore.userInfo.avatar || blogStore.blogInfo.website_config.tourist_avatar,
+    ip_address: clientInfo.ip_address,
+    ip_source: clientInfo.ip_source,
+    status: 0,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+  };
+
+  let msg: MessageEvent = {
+    type: Type.SEND_MESSAGE,
+    timestamp: Date.now(),
+    data: JSON.stringify(chat),
+  };
+
+  stompClient.value?.publish({
+    destination: chatTopic,
+    headers: {
+      uid: getUid(),
+      client: getTerminalId(),
+    },
+    body: JSON.stringify(msg),
+  });
+
+  chatContent.value = "";
+};
+
+// 撤回消息
+const back = (item: ChatMessageEvent, index: number) => {
+  const msg: MessageEvent = {
+    type: 4,
+    timestamp: Date.now(),
+    data: JSON.stringify({ id: item.id }),
+  };
+  stompClient.value?.publish({
+    destination: chatTopic,
+    body: JSON.stringify(msg),
+  });
+};
+
+// 表情操作
+const handleEmoji = (key: string) => {
+  chatContent.value += key;
+};
+const handleType = (key: number) => {
+  emojiType.value = key;
+};
+
+// 输入事件处理
+const handleKeyCode = (e: KeyboardEvent) => {
+  if (e.ctrlKey && e.key === "Enter") {
+    chatContent.value += "\n";
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    handleSend();
+  }
+};
+
+// 展示撤回按钮
+const backBtn = ref<any>([]);
+const showBack = (chat: ChatMessageEvent, index: number, e: MouseEvent) => {
   backBtn.value.forEach((item: any) => {
     item.style.display = "none";
   });
   if (
-    chat.ip_address === ipAddress.value ||
-    (chat.user_id != "" && chat.user_id == userStore.userInfo.user_id)
+    chat.ip_address == clientInfo.ip_address ||
+    (chat.user_id !== "" && chat.user_id === userStore.userInfo.user_id)
   ) {
     backBtn.value[index].style.left = e.offsetX + "px";
     backBtn.value[index].style.bottom = e.offsetY + "px";
@@ -192,117 +265,15 @@ const showBack = (chat: ChatRecordResp, index: number, e: any) => {
   }
 };
 
-const handleKeyCode = (e: any) => {
-  if (e.ctrlKey && e.keyCode === 13) {
-    chatContent.value = chatContent.value + "\n";
-  } else if (e.keyCode === 13) {
-    e.preventDefault();
-    handleSend();
-  }
-};
-
-// 发送消息
-const handleSend = () => {
-  if (chatContent.value.trim() == "") {
-    window.$message?.error("内容不能为空");
-    return;
-  }
-  // 解析表情
-  chatContent.value = chatContent.value.replace(/\[.+?\]/g, (str) => {
-    if (emojiType.value === 0) {
-      if (emojiList[str] === undefined) {
-        return str;
-      }
-      return (
-        "<img src='" +
-        emojiList[str] +
-        "' width='21' height='21' style='margin: 0 1px;vertical-align: text-bottom'/>"
-      );
-    }
-    if (emojiType.value === 1) {
-      if (tvList[str] === undefined) {
-        return str;
-      }
-      return (
-        "<img src='" +
-        tvList[str] +
-        "' width='21' height='21' style='margin: 0 1px;vertical-align: text-bottom'/>"
-      );
-    }
-    return str;
-  });
-  let chat: SendMessageReq = {
-    type: "text",
-    content: chatContent.value,
-  };
-
-  websocketMessage.timestamp = new Date().getTime();
-  websocketMessage.type = Type.SEND_MESSAGE;
-  websocketMessage.data = JSON.stringify(chat);
-  websocket.value?.send(JSON.stringify(websocketMessage));
-  chatContent.value = "";
-};
-
-// 撤回消息
-const back = (item: ChatRecordResp, index: number) => {
-  let data = {
-    id: item.id,
-  };
-
-  websocketMessage.timestamp = new Date().getTime();
-  websocketMessage.type = Type.RECALL_MESSAGE;
-  websocketMessage.data = JSON.stringify(data);
-  websocket.value?.send(JSON.stringify(websocketMessage));
-  backBtn.value[index].style.display = "none";
-};
-
-// 获取历史记录
-const getHistoryRecord = () => {
-  websocketMessage.timestamp = new Date().getTime();
-  websocketMessage.type = Type.HISTORY_RECORD;
-  websocketMessage.data = "";
-  websocket.value?.send(JSON.stringify(websocketMessage));
-};
-
-// 心跳
-const heartBeat = () => {
-  websocketMessage.timestamp = new Date().getTime();
-  websocketMessage.type = Type.HEART_BEAT;
-  websocketMessage.data = "ping";
-  websocket.value?.send(JSON.stringify(websocketMessage));
-};
-
-const startHeart = () => {
-  timeout.value = setTimeout(() => {
-    heartBeat();
-    waitServer();
-  }, 30 * 1000);
-};
-const waitServer = () => {
-  webSocketState.value = false;
-  serverTimeout.value = setTimeout(() => {
-    if (webSocketState.value) {
-      startHeart();
-      return;
-    }
-    websocket.value?.close();
-  }, 20 * 1000);
-};
-const clear = () => {
-  timeout.value && clearTimeout(timeout.value);
-  serverTimeout.value && clearTimeout(serverTimeout.value);
-};
-const handleEmoji = (key: string) => {
-  chatContent.value += key;
-};
-const handleType = (key: number) => {
-  emojiType.value = key;
-};
 onUpdated(() => {
   const element = document.getElementById("chat-content");
   if (element) {
     element.scrollTop = element.scrollHeight;
   }
+});
+
+onBeforeUnmount(() => {
+  stompClient.value?.deactivate();
 });
 </script>
 

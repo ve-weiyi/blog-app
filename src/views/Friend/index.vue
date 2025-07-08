@@ -12,9 +12,9 @@
         本站信息
       </h2>
       <blockquote class="block">
-        <p>名称：{{ blogStore.blogInfo.website_config.website_name }}</p>
-        <p>简介：{{ blogStore.blogInfo.website_config.website_intro }}</p>
-        <p>头像：{{ blogStore.blogInfo.website_config.website_avatar }}</p>
+        <p>名称：{{ blogStore.blogInfo.website_config.website_info.website_name }}</p>
+        <p>简介：{{ blogStore.blogInfo.website_config.website_info.website_intro }}</p>
+        <p>头像：{{ blogStore.blogInfo.website_config.website_info.website_avatar }}</p>
       </blockquote>
       <h2>
         <svg-icon class="flower" icon-class="flower" size="1.25rem" color="pink"></svg-icon>
@@ -57,8 +57,8 @@
 </template>
 
 <script setup lang="ts">
-import { findFriendListApi } from "@/api/friend";
-import { Friend } from "@/api/types";
+import { FriendAPI } from "@/api/friend";
+import type { Friend } from "@/api/types";
 import { useBlogStore } from "@/store";
 
 const blogStore = useBlogStore();
@@ -68,7 +68,7 @@ const cover = blogStore.getCover("friend");
 const commentType = ref(2);
 const friendList = ref<Friend[]>([]);
 onMounted(() => {
-  findFriendListApi().then((res) => {
+  FriendAPI.findFriendListApi().then((res) => {
     friendList.value = res.data.list;
   });
 });
