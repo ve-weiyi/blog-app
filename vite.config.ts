@@ -293,10 +293,10 @@ export default defineConfig((configEnv): UserConfig => {
         minify: true,
         inject: {
           data: {
-            appTitle: `${pkg.name}`,
-            appVersion: `${pkg.version}`,
-            appDescription: `${pkg.description}`,
-            appKeywords: `${pkg.keywords}`,
+            appTitle: (env.VITE_APP_TITLE as string) || pkg.name,
+            appVersion: pkg.version,
+            appDescription: pkg.description,
+            appKeywords: pkg.keywords,
           },
         },
       }),

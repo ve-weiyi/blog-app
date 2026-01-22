@@ -112,10 +112,7 @@ const handleForget = () => {
     loading.value = false;
   });
 };
-const dialogVisible = computed({
-  get: () => appStore.forgetFlag,
-  set: (value) => (appStore.forgetFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 const handleLogin = () => {
   appStore.setForgetFlag(false);
   appStore.setLoginFlag(true);

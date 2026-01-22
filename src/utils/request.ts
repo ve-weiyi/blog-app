@@ -1,18 +1,19 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+import qs from "qs";
 import MD5 from "crypto-js/md5";
-import { useUserStore } from "@/store";
-import { getTerminalId, getToken, getUid } from "./token";
+import { APP_NAME, AuthStorage } from "./auth";
+import { useUserStore } from "@/store/modules/user";
 
 const HeaderAppName = "App-Name";
 const HeaderTimestamp = "Timestamp";
 const HeaderXTerminalId = "X-Terminal-Id";
-const HeaderXTerminalTsToken = "X-Terminal-Token";
+const HeaderXTerminalToken = "X-Terminal-Token";
 
 const HeaderUid = "Uid";
 const HeaderToken = "Token";
 const HeaderAuthorization = "Authorization";
 
-const requests = axios.create({
+const axiosInstance = axios.create({
   baseURL: "",
   timeout: 10000,
   withCredentials: false, // 禁用 Cookie
@@ -20,25 +21,27 @@ const requests = axios.create({
   headers: {
     "Content-Type": "application/json;charset=UTF-8",
   },
+  paramsSerializer: (params) => {
+    return qs.stringify(params);
+  },
 });
 
 // 请求拦截器
-requests.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     // 请求携带用户token
-    const token = getToken();
-    const uid = getUid();
-
-    // 请求携带游客token
-    const terminalId = getTerminalId() || "";
+    const uid = AuthStorage.getUid();
+    const token = AuthStorage.getToken();
+    // 签名
+    const terminalId = AuthStorage.getTerminalId() || "";
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const xtoken = MD5(terminalId + timestamp).toString();
+    const terminalToken = MD5(terminalId + timestamp).toString();
 
     config.headers = Object.assign({}, config.headers, {
-      [HeaderAppName]: "blog-web",
+      [HeaderAppName]: APP_NAME,
       [HeaderTimestamp]: timestamp,
       [HeaderXTerminalId]: terminalId,
-      [HeaderXTerminalTsToken]: xtoken,
+      [HeaderXTerminalToken]: terminalToken,
       [HeaderUid]: uid,
       [HeaderToken]: token,
     });
@@ -48,42 +51,36 @@ requests.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
 // 配置响应拦截器
-requests.interceptors.response.use(
-  (response: AxiosResponse) => {
+axiosInstance.interceptors.response.use(
+  async (response: AxiosResponse) => {
     // 检查配置的响应类型是否为二进制类型（'blob' 或 'arraybuffer'）, 如果是，直接返回响应对象
     if (response.config.responseType === "blob" || response.config.responseType === "arraybuffer") {
       return response;
     }
 
-    const { code, data, message: msg } = response.data;
+    const { code, data, msg } = response.data;
 
-    // 接口错误码
+    // 接口响应成功，判断业务错误码
     switch (code) {
       case 200:
         break;
+      case 400:
+        return Promise.reject(new Error(msg || "请求参数错误"));
       case 401:
-        window.$message?.error("用户未登录");
-        return Promise.reject(msg);
+        return Promise.reject(new Error(msg || "用户未登录"));
       case 402:
         const userStore = useUserStore();
         userStore.forceLogOut();
-        window.$message?.error(msg);
-        return Promise.reject(msg);
+        return Promise.reject(new Error(msg || "登录已过期，请重新登录"));
       case 403:
-        window.$message?.error(msg);
-        return Promise.reject(msg);
-      case 500:
-        window.$message?.error(msg);
-        return Promise.reject(msg);
+        return Promise.reject(new Error(msg || "无权限访问"));
       default:
-        window.$message?.error(msg || "系统出错");
-        return Promise.reject(new Error(msg || "Error"));
+        return Promise.reject(new Error(msg || "系统错误"));
     }
     return response.data;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     console.error("request error", error); // for debug
     let { message } = error;
     if (message == "Network Error") {
@@ -99,4 +96,4 @@ requests.interceptors.response.use(
 );
 
 // 对外暴露
-export default requests;
+export default axiosInstance;

@@ -37,7 +37,7 @@
       </div>
     </template>
     <div class="menu-item">
-      <a v-if="!userStore.userInfo.user_id" class="menu-btn" @click="appStore.loginFlag = true">
+      <a v-if="!userStore.userInfo.user_id" class="menu-btn" @click="appStore.setLoginFlag(true)">
         <svg-icon icon-class="user"></svg-icon>
         登录
       </a>
@@ -230,6 +230,7 @@ const logout = () => {
     padding: 0.3rem 0.7rem;
     width: 100%;
     text-shadow: none;
+    text-align: left;
   }
 
   &:hover .link {

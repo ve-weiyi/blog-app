@@ -6,7 +6,7 @@ import type {
   ListUploadFileReq,
   MultiUploadFileReq,
   PageResp,
-  UploadFileReq
+  UploadFileReq,
 } from "./types";
 
 export const UploadAPI = {
@@ -30,19 +30,35 @@ export const UploadAPI = {
 
   /** 上传文件列表 */
   multiUploadFileApi(data?: MultiUploadFileReq): Promise<IApiResponse<FileInfoVO[]>> {
+    const formData = new FormData();
+    for (let i = 0; i < data.files.length; i++) {
+      formData.append("files", data.files[i]);
+    }
+    formData.append("file_path", data.file_path);
+
     return request({
       url: "/blog-api/v1/upload/multi_upload_file",
       method: "POST",
-      data: data,
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
   },
 
   /** 上传文件 */
   uploadFileApi(data?: UploadFileReq): Promise<IApiResponse<FileInfoVO>> {
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("file_path", data.file_path);
+
     return request({
       url: "/blog-api/v1/upload/upload_file",
       method: "POST",
-      data: data,
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
   },
 };

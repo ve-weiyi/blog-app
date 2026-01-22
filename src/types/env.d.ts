@@ -11,6 +11,10 @@ declare namespace Env {
     readonly VITE_APP_API_URL: string;
     /** WebSocket 地址 */
     readonly VITE_APP_WS_ENDPOINT: string;
+    /** 音乐API地址 */
+    readonly VITE_APP_MUSIC_API_URL: string;
+    /** AI助手API地址 */
+    readonly VITE_APP_AI_API_URL: string;
     /** Mock 服务地址 */
     readonly VITE_APP_MOCK_SERVER?: string;
     /** iconify图标作为组件的前缀 */

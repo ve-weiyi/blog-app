@@ -66,10 +66,7 @@ const loginForm = ref<LoginReq>({
   username: "",
   password: "",
 });
-const dialogVisible = computed({
-  get: () => appStore.loginFlag,
-  set: (value) => (appStore.loginFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 
 const thirdPlatformList = computed(() => {
   return blogStore.blogInfo.website_config.social_login_list;

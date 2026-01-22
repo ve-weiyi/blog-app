@@ -1,9 +1,9 @@
 import request from "@/utils/request";
-import type { EmptyResp, IdReq, PageResp, Talk, TalkQueryReq } from "./types";
+import type { EmptyResp, IdReq, PageResp, QueryTalkReq, Talk } from "./types";
 
 export const TalkAPI = {
   /** 分页获取说说列表 */
-  findTalkListApi(data?: TalkQueryReq): Promise<IApiResponse<PageResp>> {
+  findTalkListApi(data?: QueryTalkReq): Promise<IApiResponse<PageResp>> {
     return request({
       url: "/blog-api/v1/talk/find_talk_list",
       method: "POST",

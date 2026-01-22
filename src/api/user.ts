@@ -10,7 +10,7 @@ import type {
   UpdateUserInfoReq,
   UpdateUserPasswordReq,
   UserInfoResp,
-  UserLikeResp,
+  UserLikeResp
 } from "./types";
 
 export const UserAPI = {

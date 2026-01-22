@@ -1,8 +1,8 @@
 import { router } from "@/router";
 import { useUserStore } from "@/store";
-import { getTerminalId, getToken, setTerminalId } from "@/utils/token";
 import NProgress from "nprogress";
 import { AuthAPI } from "@/api/auth.ts";
+import { AuthStorage } from "@/utils/auth.ts";
 
 NProgress.configure({
   easing: "ease",
@@ -12,21 +12,21 @@ NProgress.configure({
   minimum: 0.3,
 });
 
-// 获取游客ID
-router.beforeEach((to, from, next) => {
-  if (!getTerminalId()) {
-    AuthAPI.getTouristInfoApi()
-      .then((res) => {
-        setTerminalId(res.data.tourist_id);
-        next();
-      })
-      .catch(() => {
-        window.$message?.warning("获取游客ID失败");
-        next();
-      });
-  } else {
-    next();
+// 获取客户端信息
+const getClientInfo = async (): Promise<void> => {
+  try {
+    const res = await AuthAPI.getClientInfoApi();
+    AuthStorage.setTerminalId(res.data.terminal_id);
+  } catch {
+    window.$message?.warning("获取客户端信息失败");
   }
+};
+
+router.beforeEach(async (to, from, next) => {
+  if (!AuthStorage.getTerminalId()) {
+    await getClientInfo();
+  }
+  next();
 });
 
 router.beforeEach((to, from, next) => {
@@ -34,7 +34,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.title) {
     document.title = to.meta.title as string;
   }
-  if (getToken()) {
+  if (AuthStorage.getToken()) {
     const userStore = useUserStore();
     if (userStore.userInfo.user_id === undefined) {
       userStore

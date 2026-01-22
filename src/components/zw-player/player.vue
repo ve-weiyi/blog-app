@@ -5,14 +5,14 @@
         <transition name="music_alert">
           <span class="music_alert" v-if="musicAlertState">{{ musicAlertVal }}</span>
         </transition>
-        <div class="list_close" @click="DisList">x</div>
+        <div class="list_close" @click="togglePlaylist">x</div>
         <div class="music_list">
           <div class="list_l">
             <ul class="music_type">
               <li
                 v-for="(item, index) in musicTypeList"
                 :key="index"
-                @click="_getMusicType(item.id)"
+                @click="switchMusicType(item.id)"
                 :class="{ type_active: item.id == thisMusicType }"
               >
                 {{ item.name }}
@@ -20,7 +20,7 @@
             </ul>
             <div class="list_title">
               <span style="font-size: 14px">歌曲列表</span>
-              <img :src="musicStateButton" alt="" class="music_state" @click="MusicStateChange" />
+              <img :src="musicStateButton" alt="" class="music_state" @click="togglePlayMode" />
               <div class="music_search_box">
                 <input
                   type="text"
@@ -33,10 +33,12 @@
                     <li
                       v-for="(item, index) in musicSearchList"
                       :key="index"
-                      @click="ListAdd(item.id)"
+                      @click="addToPlaylist(item.id)"
                     >
                       <span class="music_search_name">{{ item.name }}</span>
-                      <span class="music_search_ar">{{ item.artists[0].name }}</span>
+                      <span class="music_search_ar">{{
+                        item.artists?.[0]?.name || "未知艺术家"
+                      }}</span>
                     </li>
                   </ul>
                 </transition>
@@ -47,29 +49,29 @@
               <li
                 v-for="(item, index) in thisMusicList"
                 :key="index"
-                @mouseover="ButtonActive(index)"
-                @dblclick="ListPlay((thisListPage - 1) * 10 + index)"
+                @mouseover="setActiveButton(index)"
+                @dblclick="playSong((thisListPage - 1) * 10 + index)"
               >
                 <div
                   class="this_music_shlter"
                   v-if="(thisListPage - 1) * 10 + index == thisMusicIndex"
                 ></div>
                 <span>{{ item.name }}</span>
-                <span>{{ item.ar[0].name }}</span>
-                <span>{{ item.al.name }}</span>
+                <span>{{ item.artists?.[0]?.name || "未知艺术家" }}</span>
+                <span>{{ item.album?.name || "未知专辑" }}</span>
                 <transition name="list_button">
                   <div class="music_button" v-if="listButtonActiveIndex == index">
                     <div
                       class="list_play"
                       title="播放这首歌"
                       :style="{ backgroundImage: 'url(' + listPlay + ')' }"
-                      @click="ListPlay((thisListPage - 1) * 10 + index)"
+                      @click="playSong((thisListPage - 1) * 10 + index)"
                     ></div>
                     <div
                       class="list_play"
                       title="添加到 My Songs"
                       :style="{ backgroundImage: 'url(' + add + ')' }"
-                      @click="ListAdd(item.id)"
+                      @click="addToPlaylist(item.id)"
                       v-if="thisMusicType != -1"
                     ></div>
                   </div>
@@ -77,14 +79,8 @@
               </li>
             </ul>
             <div class="list_page">
-              <div class="page_last" v-if="thisListPage != 1" @click="ListChange(true)">&lt;</div>
-              <div
-                class="page_next"
-                v-if="thisListPage != Math.ceil(musicList.length / 10)"
-                @click="ListChange(false)"
-              >
-                >
-              </div>
+              <div class="page_last" v-if="canGoPrevPage" @click="changePage('prev')">&lt;</div>
+              <div class="page_next" v-if="canGoNextPage" @click="changePage('next')">&gt;</div>
             </div>
           </div>
           <div class="list_r">
@@ -110,12 +106,12 @@
         </div>
       </div>
     </transition>
-    <div class="bbox" :class="{ bbox_active: disActive }">
+    <div class="bbox" :class="{ bbox_active: disActive }" v-if="isLoaded">
       <div
         class="pan"
         :style="{ backgroundImage: 'url(' + pan + ')' }"
         :class="{ pan_active: disActive }"
-        @click="DisActive"
+        @click="togglePlayer"
       >
         <img :src="musicImg" alt="" class="pan_c" />
       </div>
@@ -123,7 +119,7 @@
         class="box"
         :style="{ backgroundImage: 'url(' + musicImg + ')' }"
         :class="{ box_active: disActive }"
-        @dblclick="DisList"
+        @dblclick="togglePlaylist"
       >
         <div
           class="music_shlter_2"
@@ -137,7 +133,7 @@
         ></div>
         <div class="music_shlter_3"></div>
         <div class="music_dis">
-          <div class="dis_list" @click="DisList">···</div>
+          <div class="dis_list" @click="togglePlaylist">···</div>
           <p class="music_title">{{ musicTitle }}</p>
           <p class="music_intro">歌手: {{ musicName }}</p>
           <ul class="music_words" ref="musicWordsRef">
@@ -190,16 +186,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, ref, watch } from "vue";
-import {
-  getHotMusic,
-  getHotTalk,
-  getMusicInfo,
-  getMusicUrl,
-  getSearchSuggest,
-  getWords,
-} from "./api/music";
-import type { Comment, MusicInfo, MusicType } from "./types";
+import { computed, onBeforeMount, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { musicApi } from "./api/music";
+import type { Artist, Song } from "./api/types";
 // 导入图片，直接作为变量使用
 import pan from "./img/pan.png";
 import play from "./img/play.png";
@@ -212,44 +201,81 @@ import state1 from "./img/state_1.png";
 import talkicon1 from "./img/talkicon1.png";
 import talkicon2 from "./img/talkicon2.png";
 
-// 定义响应式数据
-const o = ref<number>(0);
-const top = ref<number>(0);
-const playState = ref<boolean>(true);
-const playIcon = ref<string>(pause);
-const musicImg = ref<string>("");
-const musicUrl = ref<string>("");
+// 定义本地需要的类型
+interface MusicType {
+  name: string;
+  id: number;
+}
+
+interface Comment {
+  content: string;
+  user: {
+    nickname: string;
+    avatarUrl: string;
+  };
+}
+
+// 播放器状态
+const isLoaded = ref(false);
+const playState = ref(false);
+const playIcon = ref(play);
+const disActive = ref(false);
+const listIsDis = ref(false);
+
+// 音乐信息
+const musicImg = ref("");
+const musicUrl = ref("");
+const musicTitle = ref("");
+const musicName = ref("");
+const currentTime = ref(0);
+const durationTime = ref(0);
+
+// 歌词相关
 const musicWords = ref<string[]>([]);
-const musicTitle = ref<string>("");
-const musicName = ref<string>("");
 const wordsTime = ref<number[]>([]);
-const wordsTop = ref<number>(0);
-const wordIndex = ref<number>(0);
-const currentProgress = ref<string>("0%");
-const musicList = ref<MusicInfo[]>([]); // 音乐列表，初始为空
-const myMusicList = ref<MusicInfo[]>([]); // 存储在本地，可以开始判断有没有，让用户一开始就听这个列表
-const thisMusicIndex = ref<number>(1);
-const disActive = ref<boolean>(false);
-const listIsDis = ref<boolean>(false);
-const listButtonActiveIndex = ref<number>(-1);
-const thisListPage = ref<number>(1);
-const musicSearchVal = ref<string>("");
-const musicSearchList = ref<MusicInfo[]>([]);
-const musicAlertVal = ref<string>("");
-const musicAlertState = ref<boolean>(false);
+const wordsTop = ref(0);
+const wordIndex = ref(0);
+const lyricScrollOffset = ref(0);
+const lyricCurrentIndex = ref(0);
+
+// 播放列表
+const musicList = ref<Song[]>([]);
+const myMusicList = ref<Song[]>([]);
+const thisMusicIndex = ref(0);
+const thisMusicType = ref(0);
+const thisListPage = ref(1);
+const listButtonActiveIndex = ref(-1);
+const notPlay = ref<number[]>([]);
+
+// 播放模式 (0: 列表循环, 1: 单曲循环)
+const musicState = ref(0);
+const musicStateButton = ref(state1);
+
+// 搜索相关
+const musicSearchVal = ref("");
+const musicSearchList = ref<Song[]>([]);
+
+// 提示信息
+const musicAlertVal = ref("");
+const musicAlertState = ref(false);
 const musicAlertTimer = ref<NodeJS.Timeout | null>(null);
-// 新增歌词评论
+
+// 评论
 const hotTalkList = ref<Comment[]>([]);
 
-// 使用 ref 引用 DOM 元素
+// 进度条
+const currentProgress = ref("0%");
+const isDragging = ref(false);
+
+// DOM 引用
 const playerRef = ref<HTMLAudioElement>();
 const controlIconRef = ref<HTMLElement>();
 const progressBarRef = ref<HTMLElement>();
 const musicWordsRef = ref<HTMLElement>();
 
-// 进度条拖拽相关状态
-const isDragging = ref<boolean>(false);
+// 定时器
 const playerTimer = ref<NodeJS.Timeout | null>(null);
+const searchDebounceTimer = ref<NodeJS.Timeout | null>(null);
 
 const musicTypeList: MusicType[] = [
   { name: "热歌榜", id: 3778678 },
@@ -258,427 +284,474 @@ const musicTypeList: MusicType[] = [
   { name: "嘻哈榜", id: 991319590 },
   { name: "My Songs", id: -1 },
 ];
-const thisMusicType = ref<number>(0);
-const notPlay = ref<number[]>([]); // 用于存储不能播放的歌曲列表
-const musicState = ref<number>(0); // 0 列表循环，1 单曲循环
-const musicStateButton = ref<string>(state1);
 
-const thisMusicList = computed<MusicInfo[]>(() => {
-  return [...musicList.value].splice((thisListPage.value - 1) * 10, 10); // 分页
+// 计算属性
+const thisMusicList = computed(() => {
+  const start = (thisListPage.value - 1) * 10;
+  return musicList.value.slice(start, start + 10);
 });
 
-const currentTime = ref<number>(0);
-const durationTime = ref<number>(0);
-const currentStr = computed<string>(() => {
-  return formatSeconds(currentTime.value);
-});
+const currentStr = computed(() => formatSeconds(currentTime.value));
+const durationStr = computed(() => formatSeconds(durationTime.value));
 
-const durationStr = computed<string>(() => {
-  return formatSeconds(durationTime.value);
-});
+const totalPages = computed(() => Math.ceil(musicList.value.length / 10));
 
-function formatSeconds(seconds: number): string {
-  const minutes = Math.floor(seconds / 60); // 计算分钟，省略小数部分
-  const remainingSeconds = Math.floor(seconds % 60); // 计算剩余秒数，省略小数部分
+const canGoPrevPage = computed(() => thisListPage.value > 1);
+const canGoNextPage = computed(() => thisListPage.value < totalPages.value);
 
-  // 格式化为两位数
-  const formattedMinutes = String(minutes).padStart(2, "0");
-  const formattedSeconds = String(remainingSeconds).padStart(2, "0");
+// 工具函数
+const formatSeconds = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+};
 
-  return `${formattedMinutes}:${formattedSeconds}`;
-}
+const clearTimer = (timer: NodeJS.Timeout | null) => {
+  if (timer) {
+    clearTimeout(timer);
+    return null;
+  }
+  return timer;
+};
 
-// 提示音乐信息
-function MusicAlert(val: string): void {
+const clearPlayerTimer = () => {
+  if (playerTimer.value) {
+    clearInterval(playerTimer.value);
+    playerTimer.value = null;
+  }
+};
+
+// 显示提示信息
+const showAlert = (message: string) => {
   musicAlertState.value = true;
-  musicAlertVal.value = val;
-  clearTimeout(musicAlertTimer.value!);
+  musicAlertVal.value = message;
+  musicAlertTimer.value = clearTimer(musicAlertTimer.value);
   musicAlertTimer.value = setTimeout(() => {
     musicAlertState.value = false;
     musicAlertVal.value = "";
   }, 2000);
-}
+};
 
-// 切换播放状态（列表循环、单曲循环）
-function MusicStateChange(): void {
-  if (musicState.value === 0) {
-    musicState.value = 1;
-    musicStateButton.value = state0;
-    MusicAlert("已切换为单曲循环模式");
-  } else {
-    musicState.value = 0;
-    musicStateButton.value = state1;
-    MusicAlert("已切换为列表循环模式");
-  }
-}
+// 切换播放模式
+const togglePlayMode = () => {
+  musicState.value = musicState.value === 0 ? 1 : 0;
+  musicStateButton.value = musicState.value === 0 ? state1 : state0;
+  showAlert(musicState.value === 0 ? "已切换为列表循环模式" : "已切换为单曲循环模式");
+};
 
-// 设置播放列表按钮的激活状态
-function ButtonActive(id: number): void {
+// UI 控制函数
+const setActiveButton = (id: number) => {
   listButtonActiveIndex.value = id;
-}
+};
 
-// 切换播放器的激活状态
-function DisActive(): void {
+const togglePlayer = () => {
   disActive.value = !disActive.value;
-}
+};
 
-// 控制播放列表显示
-function DisList(): void {
+const togglePlaylist = () => {
   listIsDis.value = !listIsDis.value;
-}
+};
 
-// 切换播放列表的页码
-function ListChange(isLast: boolean): void {
-  if (isLast) {
+const changePage = (direction: "prev" | "next") => {
+  if (direction === "prev" && canGoPrevPage.value) {
     thisListPage.value--;
-  } else {
+  } else if (direction === "next" && canGoNextPage.value) {
     thisListPage.value++;
   }
-}
+};
 
-// 将歌曲添加到我的歌单
-function ListAdd(id: number): void {
-  getMusicInfo(id).then((res) => {
+// 添加歌曲到播放列表
+const addToPlaylist = async (id: string) => {
+  try {
+    const song = await musicApi.getSong(id);
     musicSearchVal.value = "";
-    if (myMusicList.value.length === 0) {
-      myMusicList.value = [res.data.songs[0]];
-      _getMusicType(-1);
-      // 第一次搜索直接播放
-      _getInfo();
-      // ListPlay(0);
-    } else {
-      myMusicList.value.push(res.data.songs[0]);
-      // 提示已经添加进去
-    }
-    MusicAlert("添加成功");
-  });
-}
 
-// 切换播放的歌曲
-function ListPlay(index: number): void {
-  thisMusicIndex.value = index > musicList.value.length - 1 ? 0 : index;
-  _getInfo().then(() => {
-    top.value = 0;
-    o.value = 0;
-    wordIndex.value = 0;
-    wordsTop.value = 0;
-    currentProgress.value = "0%";
-    if (!playState.value && controlIconRef.value) {
+    if (myMusicList.value.length === 0) {
+      myMusicList.value = [song];
+      await switchMusicType(-1);
+      await loadCurrentSong();
+    } else {
+      myMusicList.value.push(song);
+    }
+    showAlert("添加成功");
+  } catch (error) {
+    showAlert("添加失败");
+  }
+};
+
+// 播放指定歌曲
+const playSong = async (index: number) => {
+  thisMusicIndex.value = index >= musicList.value.length ? 0 : Math.max(0, index);
+
+  try {
+    await loadCurrentSong();
+    resetLyricState();
+
+    if (!playState.value) {
       togglePlay();
     } else {
-      playerRef.value.play();
+      playerRef.value?.play();
     }
-  });
-}
+  } catch (error) {
+    showAlert("播放失败");
+  }
+};
 
-// 获取音乐类型
-function _getMusicType(id: number): void {
-  if (thisMusicType.value !== id) {
-    notPlay.value = [];
-    if (id === -1) {
-      if (myMusicList.value.length !== 0) {
-        musicList.value = myMusicList.value;
-        thisMusicType.value = id;
-        thisMusicIndex.value = 0;
-        thisListPage.value = 1;
-        // ListPlay(0);
-      } else {
-        // 自定义库没有歌曲，提示需要搜索才能添加
-        MusicAlert("没有歌曲,需要自己添加");
-      }
+// 重置歌词状态
+const resetLyricState = () => {
+  lyricScrollOffset.value = 0;
+  lyricCurrentIndex.value = 0;
+  wordIndex.value = 0;
+  wordsTop.value = 0;
+  currentProgress.value = "0%";
+};
+
+// 切换音乐类型
+const switchMusicType = async (id: number) => {
+  if (thisMusicType.value === id) return;
+
+  notPlay.value = [];
+  thisMusicIndex.value = 0;
+  thisListPage.value = 1;
+
+  if (id === -1) {
+    if (myMusicList.value.length > 0) {
+      musicList.value = myMusicList.value;
+      thisMusicType.value = id;
     } else {
-      getHotMusic(id).then((res) => {
-        musicList.value = res.data.playlist.tracks.splice(0, 200);
-        thisMusicType.value = id;
-        thisMusicIndex.value = 0;
-        thisListPage.value = 1;
-        // ListPlay(0);
-      });
+      showAlert("没有歌曲,需要自己添加");
+      return;
+    }
+  } else {
+    try {
+      const playlist = await musicApi.getPlaylist(id.toString());
+      musicList.value = playlist.songs.slice(0, 200);
+      thisMusicType.value = id;
+    } catch (error) {
+      showAlert("获取播放列表失败");
     }
   }
-}
+};
 
-// 获取歌曲信息
-function _getInfo(): Promise<void> {
-  let music = musicList.value[thisMusicIndex.value];
-  return getMusicUrl(music.id).then((res) => {
-    if (!res.data.data[0].url) {
-      if (notPlay.value.length !== musicList.value.length) {
-        let nextIndex = thisMusicIndex.value + 1;
+// 加载当前歌曲信息
+const loadCurrentSong = async (): Promise<void> => {
+  const currentSong = musicList.value[thisMusicIndex.value];
+  if (!currentSong) return;
+
+  try {
+    const songLink = await musicApi.getSongLink(currentSong.id);
+
+    if (!songLink.url) {
+      if (notPlay.value.length < musicList.value.length) {
         if (!notPlay.value.includes(thisMusicIndex.value)) {
           notPlay.value.push(thisMusicIndex.value);
         }
-        MusicAlert(`${music.name} 因为一些原因不能播放`);
-        ListPlay(nextIndex); // 寻找下一首歌，直到找到可播放的
+        showAlert(`${currentSong.name} 因为一些原因不能播放`);
+        await playSong(thisMusicIndex.value + 1);
       } else {
-        MusicAlert("此列表所有歌都不能播放");
+        showAlert("此列表所有歌都不能播放");
       }
-    } else {
-      musicUrl.value = res.data.data[0].url.replace("http://", "https://");
-      musicImg.value = music.al.picUrl.replace("http://", "https://") + "?param=300y300";
-      musicTitle.value = music.name;
-      musicName.value = music.ar.map((i: any) => i.name).join("/");
-
-      getWords(music.id).then((res) => {
-        if (!res.data.nolyric) {
-          let info = Cut(res.data.lrc.lyric);
-          musicWords.value = info.wordArr;
-          wordsTime.value = info.timeArr;
-        }
-      });
-
-      getHotTalk(music.id).then((res) => {
-        let count = 0;
-        hotTalkList.value = res.data.hotComments.slice(0, 3);
-        hotTalkList.value.forEach((e) => {
-          count += e.content.length;
-          e.user.avatarUrl = e.user.avatarUrl + "?param=50y50"; // Modify avatar URL
-        });
-        if (count >= 200) {
-          hotTalkList.value = hotTalkList.value.slice(0, 2);
-        }
-      });
+      return;
     }
-  });
-}
 
-// 歌词解析结果接口
+    // 设置歌曲信息
+    isLoaded.value = true;
+    musicUrl.value = songLink.url.replace("http://", "https://");
+    musicImg.value = currentSong.picture.replace("http://", "https://") + "?param=300y300";
+    musicTitle.value = currentSong.name;
+    musicName.value =
+      currentSong.artists?.map((artist: Artist) => artist.name).join("/") || "未知艺术家";
+
+    // 加载歌词
+    await loadLyrics(currentSong.id);
+  } catch (error) {
+    showAlert("加载歌曲失败");
+  }
+};
+
+// 加载歌词
+const loadLyrics = async (songId: string) => {
+  try {
+    const lyricData = await musicApi.getLyric(songId);
+    if (lyricData.lyric) {
+      const parsedLyric = parseLyric(lyricData.lyric);
+      musicWords.value = parsedLyric.wordArr;
+      wordsTime.value = parsedLyric.timeArr;
+    }
+  } catch (error) {
+    console.warn("加载歌词失败", error);
+  }
+};
+
+// 歌词解析
 interface LyricParseResult {
   wordArr: string[];
   timeArr: number[];
 }
 
-// 处理歌词文本
-function Cut(str: string): LyricParseResult {
-  let wordArr: string[] = [];
-  let timeArr: number[] = [];
-  let arr = str.split("\n");
-  arr.forEach((i: string) => {
-    let reg = /\[([0-9]+):([0-9]+)\.([0-9]+)\](.+)/;
-    let result = i.match(reg);
-    if (result) {
-      wordArr.push(result[4]);
-      timeArr.push(parseInt(result[1]) * 60 + parseInt(result[2]) + parseInt(result[3]) / 1000);
+const parseLyric = (lyricText: string): LyricParseResult => {
+  const wordArr: string[] = [];
+  const timeArr: number[] = [];
+  const lines = lyricText.split("\n");
+
+  const timeRegex = /\[(\d+):(\d+)\.(\d+)\](.+)/;
+
+  lines.forEach((line) => {
+    const match = line.match(timeRegex);
+    if (match) {
+      const [, minutes, seconds, milliseconds, text] = match;
+      wordArr.push(text.trim());
+      timeArr.push(parseInt(minutes) * 60 + parseInt(seconds) + parseInt(milliseconds) / 1000);
     }
   });
+
   return { wordArr, timeArr };
-}
+};
 
-// 定时器函数
-function timer(): void {
-  if (!playerRef.value) return;
+// 播放器定时器
+const updatePlayerState = () => {
+  const player = playerRef.value;
+  if (!player) return;
 
-  durationTime.value = playerRef.value.duration;
-  currentTime.value = playerRef.value.currentTime;
-  currentProgress.value = `${(playerRef.value.currentTime / playerRef.value.duration) * 100}%`;
-  if (!playerRef.value.duration) {
-    return;
+  durationTime.value = player.duration || 0;
+  currentTime.value = player.currentTime || 0;
+
+  if (durationTime.value > 0) {
+    currentProgress.value = `${(currentTime.value / durationTime.value) * 100}%`;
   }
 
-  // 歌词滚动控制
-  if (playerRef.value.currentTime >= wordsTime.value[o.value + 1]) {
+  // 更新歌词
+  updateLyricScroll();
+
+  // 检查是否播放结束
+  if (currentTime.value >= durationTime.value && durationTime.value > 0) {
+    handleSongEnd();
+  }
+};
+
+// 更新歌词滚动
+const updateLyricScroll = () => {
+  const currentTime = playerRef.value?.currentTime || 0;
+  const nextLyricTime = wordsTime.value[lyricCurrentIndex.value + 1];
+
+  if (nextLyricTime && currentTime >= nextLyricTime) {
     const musicWordElements = musicWordsRef.value?.querySelectorAll(".music_word");
-    if (musicWordElements && musicWordElements[o.value]) {
-      let wh = musicWordElements[o.value].clientHeight;
-      let wt = window.getComputedStyle(musicWordElements[o.value]).marginTop;
-      let wsh = musicWordsRef.value?.clientHeight;
+    const currentElement = musicWordElements?.[lyricCurrentIndex.value];
 
-      top.value += wh + parseInt(wt);
+    if (currentElement && musicWordsRef.value) {
+      const elementHeight = currentElement.clientHeight;
+      const marginTop = parseInt(window.getComputedStyle(currentElement).marginTop);
+      const containerHeight = musicWordsRef.value.clientHeight;
 
-      if (wsh && top.value >= wsh / 2 - 11) {
-        //开始滚动的高度
-        wordsTop.value += -(wh + parseInt(wt));
+      lyricScrollOffset.value += elementHeight + marginTop;
+
+      if (lyricScrollOffset.value >= containerHeight / 2 - 11) {
+        wordsTop.value -= elementHeight + marginTop;
       }
 
-      wordIndex.value = o.value + 1;
-      o.value++;
+      wordIndex.value = lyricCurrentIndex.value + 1;
+      lyricCurrentIndex.value++;
     }
   }
-  if (playerRef.value.currentTime >= playerRef.value.duration) {
-    // 切换歌曲
-    if (musicList.value.length !== 1 && musicState.value === 0) {
-      thisMusicIndex.value =
-        thisMusicIndex.value >= musicList.value.length - 1 ? 0 : thisMusicIndex.value + 1;
-      ListPlay(thisMusicIndex.value);
-    } else {
-      playerRef.value.play();
-      top.value = 0;
-      o.value = 0;
-      wordIndex.value = 0;
-      wordsTop.value = 0;
-      currentProgress.value = "0%";
-    }
+};
+
+// 处理歌曲结束
+const handleSongEnd = () => {
+  if (musicList.value.length > 1 && musicState.value === 0) {
+    // 列表循环模式
+    const nextIndex =
+      thisMusicIndex.value >= musicList.value.length - 1 ? 0 : thisMusicIndex.value + 1;
+    playSong(nextIndex);
+  } else {
+    // 单曲循环模式
+    playerRef.value?.play();
+    resetLyricState();
   }
-}
+};
 
 // 播放/暂停切换
-function togglePlay(): void {
-  if (!playerRef.value) return;
+const togglePlay = () => {
+  const player = playerRef.value;
+  if (!player) return;
 
   if (playState.value) {
-    playerRef.value.pause();
+    player.pause();
     playState.value = false;
     playIcon.value = play;
-    if (playerTimer.value) {
-      clearInterval(playerTimer.value);
-      playerTimer.value = null;
-    }
+    clearPlayerTimer();
   } else {
-    playerRef.value.play();
+    player.play();
     playState.value = true;
     playIcon.value = pause;
-    if (playerTimer.value) {
-      clearInterval(playerTimer.value);
-    }
-    playerTimer.value = setInterval(timer, 1000);
+    clearPlayerTimer();
+    playerTimer.value = setInterval(updatePlayerState, 500);
   }
-}
+};
 
-// 进度条鼠标按下事件
-function onProgressMouseDown(ev: MouseEvent): void {
-  if (!progressBarRef.value || !playerRef.value) return;
+// 进度条控制
+const getProgressRatio = (event: MouseEvent): number => {
+  const progressBar = progressBarRef.value;
+  if (!progressBar) return 0;
+
+  const rect = progressBar.getBoundingClientRect();
+  const ratio = (event.clientX - rect.left) / progressBar.offsetWidth;
+  return Math.max(0, Math.min(1, ratio));
+};
+
+const onProgressMouseDown = (event: MouseEvent) => {
+  const player = playerRef.value;
+  if (!player) return;
 
   isDragging.value = true;
-  const pro =
-    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
-    progressBarRef.value.offsetWidth;
+  const ratio = getProgressRatio(event);
 
-  if (playerTimer.value) {
-    clearInterval(playerTimer.value);
-    playerTimer.value = null;
-  }
+  clearPlayerTimer();
+  currentProgress.value = `${ratio * 100}%`;
+  player.currentTime = player.duration * ratio;
+  syncLyricPosition(player.currentTime);
+};
 
-  currentProgress.value = `${pro * 100}%`;
-  playerRef.value.currentTime = playerRef.value.duration * pro;
+const onProgressMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return;
 
-  updateLyricPosition(playerRef.value.currentTime);
-}
+  const ratio = getProgressRatio(event);
+  currentProgress.value = `${ratio * 100}%`;
+};
 
-// 进度条鼠标移动事件
-function onProgressMouseMove(ev: MouseEvent): void {
-  if (!isDragging.value || !progressBarRef.value) return;
-
-  const newPro =
-    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
-    progressBarRef.value.offsetWidth;
-  currentProgress.value = `${newPro * 100}%`;
-}
-
-// 进度条鼠标松开事件
-function onProgressMouseUp(ev: MouseEvent): void {
-  if (!isDragging.value || !progressBarRef.value || !playerRef.value) return;
+const onProgressMouseUp = (event: MouseEvent) => {
+  const player = playerRef.value;
+  if (!isDragging.value || !player) return;
 
   isDragging.value = false;
-  const pro =
-    (ev.clientX - progressBarRef.value.getBoundingClientRect().left) /
-    progressBarRef.value.offsetWidth;
+  const ratio = getProgressRatio(event);
 
-  playerRef.value.currentTime = playerRef.value.duration * pro;
-  updateLyricPosition(playerRef.value.currentTime);
+  player.currentTime = player.duration * ratio;
+  syncLyricPosition(player.currentTime);
 
-  if (playerTimer.value) {
-    clearInterval(playerTimer.value);
-  }
-  playerTimer.value = setInterval(timer, 1000);
+  clearPlayerTimer();
+  playerTimer.value = setInterval(updatePlayerState, 500);
 
   playState.value = true;
   playIcon.value = pause;
 
-  if (playerRef.value.currentTime >= playerRef.value.duration) {
-    top.value = 0;
-    o.value = 0;
-    wordIndex.value = 0;
-    wordsTop.value = 0;
-    currentProgress.value = "0%";
+  if (player.currentTime >= player.duration) {
+    resetLyricState();
   }
 
-  playerRef.value.play();
-}
+  player.play();
+};
 
-// 进度条鼠标离开事件
-function onProgressMouseLeave(): void {
+const onProgressMouseLeave = () => {
   isDragging.value = false;
-}
+};
 
-// 更新歌词位置
-function updateLyricPosition(currentTime: number): void {
-  const c_arr = [...wordsTime.value];
-  c_arr.push(currentTime);
-  c_arr.sort((l, r) => l - r);
-  const now_o = c_arr.indexOf(currentTime) - 1;
-  let diff_h = 0;
+// 同步歌词位置
+const syncLyricPosition = (currentTime: number) => {
+  const timeArray = [...wordsTime.value, currentTime].sort((a, b) => a - b);
+  const newIndex = timeArray.indexOf(currentTime) - 1;
+  const clampedIndex = Math.max(0, newIndex);
 
   const musicWordElements = musicWordsRef.value?.querySelectorAll(".music_word");
-  if (musicWordElements) {
-    if (o.value < now_o) {
-      for (let i = o.value; i < now_o; i++) {
-        if (musicWordElements[i]) {
-          diff_h += -(
-            musicWordElements[i].clientHeight +
-            parseInt(window.getComputedStyle(musicWordElements[i]).marginTop)
-          );
-        }
+  if (!musicWordElements) return;
+
+  let heightDiff = 0;
+  const oldIndex = lyricCurrentIndex.value;
+
+  if (oldIndex < clampedIndex) {
+    // 向前滚动
+    for (let i = oldIndex; i < clampedIndex; i++) {
+      const element = musicWordElements[i];
+      if (element) {
+        const height = element.clientHeight;
+        const marginTop = parseInt(window.getComputedStyle(element).marginTop);
+        heightDiff -= height + marginTop;
       }
-    } else {
-      for (let i = now_o; i < o.value; i++) {
-        if (musicWordElements[i]) {
-          diff_h +=
-            musicWordElements[i].clientHeight +
-            parseInt(window.getComputedStyle(musicWordElements[i]).marginTop);
-        }
+    }
+  } else if (oldIndex > clampedIndex) {
+    // 向后滚动
+    for (let i = clampedIndex; i < oldIndex; i++) {
+      const element = musicWordElements[i];
+      if (element) {
+        const height = element.clientHeight;
+        const marginTop = parseInt(window.getComputedStyle(element).marginTop);
+        heightDiff += height + marginTop;
       }
     }
   }
 
-  wordsTop.value += diff_h;
-  wordIndex.value = o.value = now_o;
-}
+  wordsTop.value += heightDiff;
+  wordIndex.value = lyricCurrentIndex.value = clampedIndex;
+};
 
-function Player(): void {
-  if (!playerRef.value) return;
+// 初始化播放器
+const initPlayer = () => {
+  playerTimer.value = setInterval(updatePlayerState, 500);
 
-  playerTimer.value = setInterval(timer, 500);
-
-  // 自动播放控制
-  document.body.addEventListener("click", function playMusicOnce() {
-    if (playerRef.value) {
-      ListPlay(0);
+  // 用户首次点击时自动播放
+  const handleFirstPlay = () => {
+    if (musicList.value.length > 0) {
+      playSong(0);
+      playIcon.value = pause;
     }
-    // 移除点击事件监听器，确保只执行一次
-    document.body.removeEventListener("click", playMusicOnce);
-  });
-}
+    document.body.removeEventListener("click", handleFirstPlay);
+  };
 
-// 监听搜索框的变化
-watch(musicSearchVal, () => {
-  if (musicSearchVal.value === "") {
+  document.body.addEventListener("click", handleFirstPlay);
+};
+
+// 搜索功能
+const performSearch = async (query: string) => {
+  if (!query.trim()) {
     musicSearchList.value = [];
-  } else {
-    getSearchSuggest(musicSearchVal.value).then((res) => {
-      musicSearchList.value = res.data.result.songs || [];
-    });
+    return;
   }
+
+  try {
+    const results = await musicApi.search(query);
+    musicSearchList.value = results || [];
+  } catch (error) {
+    console.warn("搜索失败", error);
+    musicSearchList.value = [];
+  }
+};
+
+// 防抖搜索
+watch(musicSearchVal, (newVal) => {
+  searchDebounceTimer.value = clearTimer(searchDebounceTimer.value);
+
+  if (!newVal.trim()) {
+    musicSearchList.value = [];
+    return;
+  }
+
+  searchDebounceTimer.value = setTimeout(() => {
+    performSearch(newVal);
+  }, 300);
 });
 
-// 页面挂载时初始化播放器
-onMounted(() => {
-  Player();
-});
+// 清理函数
+const cleanup = () => {
+  clearPlayerTimer();
+  musicAlertTimer.value = clearTimer(musicAlertTimer.value);
+  searchDebounceTimer.value = clearTimer(searchDebounceTimer.value);
+};
 
-// 页面创建时初始化数据
+// 生命周期钩子
 onBeforeMount(() => {
-  ListAdd(2124731026);
-  // ListAdd(167876);
-  DisAuthorInfo(); // 禁删~感谢配合
-});
-
-// 禁删~感谢配合
-function DisAuthorInfo(): void {
+  addToPlaylist("2124731026");
   console.log(
     "%c音乐播放器作者----与梦，博客地址：https://veweiyi.cn",
     "background-color:rgb(30,30,30);border-radius:4px;font-size:12px;padding:4px;color:rgb(220,208,129);"
   );
-}
+});
+
+onMounted(() => {
+  initPlayer();
+});
+
+onBeforeUnmount(() => {
+  cleanup();
+});
 </script>
 
 <style scoped>

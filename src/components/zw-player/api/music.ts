@@ -1,38 +1,35 @@
-import axios, { type AxiosPromise } from "axios";
-import type {
-  CommentResponse,
-  LyricResponse,
-  PlaylistResponse,
-  SearchSuggestResponse,
-  SongDetailResponse,
-  SongUrlResponse,
-} from "../types";
+import type { Album, Artist, Lyric, Playlist, Song, SongLink } from "./types.ts";
 
-// 获取歌词
-export const getWords = (id: number): AxiosPromise<LyricResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/lyric?id=${id}`);
-};
+const BASE_URL = import.meta.env.VITE_APP_MUSIC_API_URL;
 
-// 获取歌曲详情
-export const getMusicInfo = (id: number): AxiosPromise<SongDetailResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/song/detail?ids=${id}`);
-};
+export const musicApi = {
+  search(keyword: string): Promise<Song[]> {
+    return fetch(`${BASE_URL}/search?keyword=${encodeURIComponent(keyword)}`).then((res) =>
+      res.json()
+    );
+  },
 
-// 获取歌曲url
-export const getMusicUrl = (id: number): AxiosPromise<SongUrlResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/song/url?id=${id}`);
-};
-// 获取热门歌曲
-export const getHotMusic = (id: number): AxiosPromise<PlaylistResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/playlist/detail?id=${id}`);
-};
+  getSong(id: string): Promise<Song> {
+    return fetch(`${BASE_URL}/song?id=${id}`).then((res) => res.json());
+  },
 
-// 获取搜索建议
-export const getSearchSuggest = (key: string): AxiosPromise<SearchSuggestResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/search/suggest?keywords=${key}`);
-};
+  getSongLink(id: string): Promise<SongLink> {
+    return fetch(`${BASE_URL}/song/link?id=${id}`).then((res) => res.json());
+  },
 
-// 获取歌曲热门评论
-export const getHotTalk = (id: number): AxiosPromise<CommentResponse> => {
-  return axios.post(`https://n.xlz122.cn/api/comment/music?id=${id}&limit=3`);
+  getLyric(id: string): Promise<Lyric> {
+    return fetch(`${BASE_URL}/lyric?id=${id}`).then((res) => res.json());
+  },
+
+  getAlbum(id: string): Promise<Album> {
+    return fetch(`${BASE_URL}/album?id=${id}`).then((res) => res.json());
+  },
+
+  getArtist(id: string): Promise<Artist> {
+    return fetch(`${BASE_URL}/artist?id=${id}`).then((res) => res.json());
+  },
+
+  getPlaylist(id: string): Promise<Playlist> {
+    return fetch(`${BASE_URL}/playlist?id=${id}`).then((res) => res.json());
+  },
 };

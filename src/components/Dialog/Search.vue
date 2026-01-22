@@ -42,20 +42,17 @@
 import { ArticleAPI } from "@/api/article";
 import { useAppStore } from "@/store";
 import { debouncedWatch } from "@vueuse/core";
-import type { ArticleHome, ArticleHomeQueryReq } from "@/api/types";
+import type { ArticleHome, QueryArticleHomeReq } from "@/api/types";
 
 const appStore = useAppStore();
-const dialogVisible = computed({
-  get: () => appStore.searchFlag,
-  set: (value) => (appStore.searchFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 const keyword = ref("");
 const articleList = ref<ArticleHome[]>([]);
 debouncedWatch(keyword, () => (keyword.value ? handleSearch() : (articleList.value = [])), {
   debounce: 300,
 });
 const handleSearch = () => {
-  const data: ArticleHomeQueryReq = {
+  const data: QueryArticleHomeReq = {
     article_title: keyword.value,
   };
 

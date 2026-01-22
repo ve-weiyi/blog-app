@@ -1,4 +1,4 @@
-import { clearStorage, getToken, setToken, setUid } from "@/utils/token";
+import { AuthStorage } from "@/utils/auth.ts";
 import { UserAPI } from "@/api/user";
 import { AuthAPI } from "@/api/auth";
 import type {
@@ -43,9 +43,7 @@ export const useUserStore = defineStore("useUserStore", {
       return new Promise((resolve, reject) => {
         AuthAPI.loginApi(loginData)
           .then((res) => {
-            const token = res.data.token;
-            setUid(String(token.user_id));
-            setToken(token.access_token);
+            AuthStorage.setTokens(res.data.user_id, res.data.token.access_token);
             resolve(res);
           })
           .catch((error) => {
@@ -57,9 +55,7 @@ export const useUserStore = defineStore("useUserStore", {
       return new Promise((resolve, reject) => {
         AuthAPI.emailLoginApi(loginData)
           .then((res) => {
-            const token = res.data.token;
-            setUid(String(token.user_id));
-            setToken(token.access_token);
+            AuthStorage.setTokens(res.data.user_id, res.data.token.access_token);
             resolve(res);
           })
           .catch((error) => {
@@ -71,9 +67,7 @@ export const useUserStore = defineStore("useUserStore", {
       return new Promise((resolve, reject) => {
         AuthAPI.phoneLoginApi(loginData)
           .then((res) => {
-            const token = res.data.token;
-            setUid(String(token.user_id));
-            setToken(token.access_token);
+            AuthStorage.setTokens(res.data.user_id, res.data.token.access_token);
             resolve(res);
           })
           .catch((error) => {
@@ -86,9 +80,7 @@ export const useUserStore = defineStore("useUserStore", {
       return new Promise((resolve, reject) => {
         AuthAPI.thirdLoginApi(loginData)
           .then((res) => {
-            const token = res.data.token;
-            setUid(String(token.user_id));
-            setToken(token.access_token);
+            AuthStorage.setTokens(res.data.user_id, res.data.token.access_token);
             resolve(res);
           })
           .catch((error) => {
@@ -101,7 +93,7 @@ export const useUserStore = defineStore("useUserStore", {
         AuthAPI.logoutApi()
           .then((res) => {
             this.forceLogOut();
-            clearStorage();
+            AuthStorage.clearAuth()
             resolve(res);
           })
           .catch((error) => {
@@ -142,15 +134,13 @@ export const useUserStore = defineStore("useUserStore", {
     forceLogOut() {
       return new Promise<void>((resolve) => {
         this.$reset();
-        clearStorage();
+        AuthStorage.clearAuth()
         resolve();
       });
     },
 
     isLogin() {
-      const tk = getToken();
-      // console.log("isLogin", tk != undefined);
-      return tk != undefined;
+      return AuthStorage.getToken() != undefined;
     },
     articleLike(articleId: number) {
       const articleLikeSet = this.userLike.article_like_set;

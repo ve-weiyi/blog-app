@@ -4,378 +4,333 @@
       <svg-icon icon-class="comment" size="1.4rem" style="margin-right: 5px"></svg-icon>
       评论
     </div>
-    <ReplyBox
+
+    <CommentBox
       ref="replyRef"
       placeholder="发一条友善的评论"
-      :avatar="userStore.userInfo.avatar || blogStore.blogInfo.website_config.tourist_avatar"
-      @confirm="insertComment"
-      @cancel="clearComment"
-    ></ReplyBox>
-    <div v-if="count > 0">
-      <div v-for="(comment, index) of commentList" :key="comment.id" class="reply-comment">
-        <div class="reply-box-avatar">
-          <img class="shoka-avatar" :src="comment.user?.avatar" />
-        </div>
-        <div class="content-warp">
-          <div class="user-info">
-            <div class="user-name">{{ comment.user?.nickname }}</div>
-            <svg-icon v-if="comment.user?.user_id == '1'" icon-class="badge"></svg-icon>
-          </div>
-          <div class="reply-content" v-html="comment.comment_content"></div>
-          <div class="reply-info">
-            <span class="reply-time">{{ formatDateTime(comment.created_at) }}</span>
-            <span class="reply-like" @click="likeComment(comment)">
-              <svg-icon
-                class="like"
-                icon-class="like"
-                size="0.8rem"
-                :class="isLike(comment.id)"
-                style="margin-right: 5px"
-              ></svg-icon>
-              <span v-show="comment.like_count">{{ comment.like_count }}</span>
-            </span>
-            <span class="reply-btn" @click="handleReply(index, comment)">回复</span>
-          </div>
-          <div
-            v-for="reply of comment.comment_reply_list"
-            :key="reply.id"
-            class="sub-reply-comment"
-          >
-            <div class="sub-user-info">
-              <img class="sub-reply-avatar" :src="reply.user?.avatar" />
-              <div class="sub-user-name">{{ reply.user?.nickname }}</div>
-              <svg-icon
-                v-if="reply.user?.user_id == '1'"
-                icon-class="badge"
-                style="margin-left: 5px"
-              ></svg-icon>
-            </div>
-            <span class="reply-content">
-              <template v-if="reply.reply_user != null">
-                回复
-                <span style="color: #008ac5">@{{ reply.reply_user?.nickname }}</span> :
-              </template>
-              <span v-html="reply.comment_content"></span>
-            </span>
-            <div class="reply-info">
-              <span class="reply-time">{{ formatDateTime(reply.created_at) }}</span>
-              <span class="reply-like" @click="likeComment(reply)">
-                <svg-icon
-                  class="like"
-                  icon-class="like"
-                  size="0.8rem"
-                  :class="isLike(reply.id)"
-                  style="margin-right: 5px"
-                ></svg-icon>
-                <span v-show="reply.like_count > 0">{{ reply.like_count }}</span>
-              </span>
-              <span class="reply-btn" @click="handleReply(index, reply)">回复</span>
-            </div>
-          </div>
-          <div v-show="comment.reply_count > 3" ref="readMoreRef" class="view-more">
-            <span>共{{ comment.reply_count }}条回复, </span>
-            <span class="view-more-btn" @click="readMoreComment(index, comment)">点击查看</span>
-          </div>
-          <Paging
-            ref="pageRef"
-            :total="comment.reply_count"
-            @get-current-page="
-              (current: number) => {
-                changeReplyCurrent(index, comment, current);
-              }
-            "
-          ></Paging>
-          <ReplyBox
-            ref="replyCommentRef"
-            class="mt-4"
-            placeholder="编辑一条回复吧~"
-            :show="replyCommentIndex == index"
-            :avatar="userStore.userInfo.avatar || blogStore.blogInfo.website_config.tourist_avatar"
-            @confirm="confirmReply(index, comment)"
-            @cancel="cancelReply(index, comment)"
-          >
-          </ReplyBox>
-          <div class="bottom-line"></div>
-        </div>
-      </div>
-      <div v-if="count > commentList.length" class="loading-warp">
-        <n-button class="btn" color="#e9546b" @click="listComments"> 加载更多...</n-button>
+      :avatar="currentUserAvatar"
+      @confirm="handleInsertComment"
+      @cancel="handleClearComment"
+    />
+
+    <div v-if="hasComments">
+      <CommentItem
+        v-for="(comment, index) in commentList"
+        :key="comment.id"
+        :comment="comment"
+        :index="index"
+        :reply-index="replyCommentIndex"
+        :reply-target="replyTarget"
+        :current-user-avatar="currentUserAvatar"
+        @reply="handleReply"
+        @confirm-reply="handleConfirmReply"
+        @cancel-reply="handleCancelReply"
+        @like="handleLikeComment"
+        @read-more="handleReadMoreComment"
+        @change-page="handleChangeReplyCurrent"
+        @collapse="handleCollapseComment"
+      />
+
+      <div v-if="hasMoreComments" class="loading-warp">
+        <n-button class="btn" color="#e9546b" :loading="loading" @click="loadMoreComments">
+          {{ loading ? "加载中..." : "加载更多..." }}
+        </n-button>
       </div>
     </div>
-    <div v-else style="padding: 1.25rem; text-align: center">来发评论吧~</div>
+
+    <div v-else class="empty-comments">来发评论吧~</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { formatDateTime } from "@/utils/date";
 import { CommentAPI } from "@/api/comment";
-import type { Comment, CommentNewReq, CommentQueryReq, CommentReply } from "@/api/types";
+import type { Comment, CommentReply, NewCommentReq, QueryCommentReq } from "@/api/types";
 import { replaceEmoji } from "@/utils/emojis";
+import CommentItem from "./CommentItem.vue";
 
-const props = defineProps({
-  commentType: {
-    type: Number,
-  },
+interface Props {
+  commentType?: number;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  commentType: 1,
 });
 
+const emit = defineEmits<{
+  getCommentCount: [count: number];
+}>();
+
+// Store
 const userStore = useUserStore();
 const appStore = useAppStore();
 const blogStore = useBlogStore();
 
-const pageRef = ref<any>([]);
-const readMoreRef = ref<any>([]);
-const emit = defineEmits(["getCommentCount"]);
-const typeId = computed(() =>
-  Number(useRoute().params.id) ? Number(useRoute().params.id) : undefined
-);
-const isLike = computed(() => (id: number) => (userStore.isCommentLike(id) ? "like-flag" : ""));
-
-const data = reactive({
-  count: 10,
-  queryParams: {
-    current: 1,
-    page_size: 10,
-    typeId: typeId.value,
-    commentType: props.commentType,
-  },
-});
-const { count, queryParams } = toRefs(data);
-
-// 父组件向子组件传输的数据
-
-// 获取路由参数
+// Route
 const route = useRoute();
 
-const commentList = ref<Comment[]>([]);
-
+// Refs
 const replyRef = ref();
-const replyCommentRef = ref();
+const loading = ref(false);
+const commentList = ref<Comment[]>([]);
 const replyCommentIndex = ref(-1);
+const replyTarget = ref<Comment | any>(null);
 
-// 新增评论
-function insertComment() {
-  // 判断登录
+// Computed
+const typeId = computed(() => {
+  const id = Number(route.params.id);
+  return id || undefined;
+});
+
+const currentUserAvatar = computed(
+  () => userStore.userInfo.avatar || blogStore.blogInfo.website_config.tourist_avatar
+);
+
+const hasComments = computed(() => commentList.value.length > 0);
+const hasMoreComments = computed(() => count.value > commentList.value.length);
+
+// Reactive data
+const queryParams = reactive({
+  current: 1,
+  page_size: 10,
+  typeId: typeId.value,
+  commentType: props.commentType,
+});
+
+const count = ref(0);
+
+// 工具函数
+const checkLogin = () => {
   if (!userStore.isLogin()) {
-    appStore.loginFlag = true;
-    return;
+    appStore.setLoginFlag(true);
+    return false;
   }
-  let content = replyRef.value.content;
-  // 判空
-  if (content.trim() === "") {
-    window.$message?.error("评论不能为空");
-    return;
-  }
-  // 解析表情
-  content = replaceEmoji(content);
+  return true;
+};
 
-  // 发送请求
-  const path = route.path;
-  const arr = path.split("/");
-  const comment: CommentNewReq = {
-    topic_id: parseInt(arr[2]) | 0,
+const getTopicId = () => {
+  const pathSegments = route.path.split("/");
+  return parseInt(pathSegments[2]) || 0;
+};
+
+const showMessage = (type: "success" | "error", message: string) => {
+  window.$message?.[type](message);
+};
+
+const getReviewMessage = (isReview: number) =>
+  isReview == 1 ? "评论成功，正在审核中" : "评论成功";
+
+// 评论相关操作
+const handleInsertComment = async () => {
+  if (!checkLogin()) return;
+
+  const content = replyRef.value?.content?.trim();
+  if (!content) {
+    showMessage("error", "评论不能为空");
+    return;
+  }
+
+  const comment: NewCommentReq = {
+    topic_id: getTopicId(),
     reply_user_id: "",
     parent_id: 0,
-    comment_content: content,
-    type: props.commentType,
-  };
-
-  CommentAPI.addCommentApi(comment)
-    .then((res) => {
-      const isReview = blogStore.blogInfo.website_config.website_feature.is_comment_review;
-      if (isReview) {
-        window.$message?.success("评论成功，正在审核中");
-      } else {
-        window.$message?.success("评论成功");
-      }
-      // 查询最新评论
-      queryParams.value.current = 1;
-      listComments();
-    })
-    .catch((err) => {
-      window.$message?.error(err.message);
-    });
-
-  replyRef.value.content = "";
-}
-
-// 清空评论
-function clearComment() {
-  replyRef.value.content = "";
-}
-
-// 回复评论
-function handleReply(index: number, comment: Comment | CommentReply) {
-  console.log("handleReply", index, comment.user_id, userStore.userInfo.user_id);
-  if (replyCommentIndex.value == index) {
-    replyCommentIndex.value = -1;
-    return;
-  }
-  replyCommentIndex.value = index;
-  const replyComponent = replyCommentRef.value[index];
-  if (comment.user_id != userStore.userInfo.user_id) {
-    replyComponent.placeholder = "回复@" + comment.user?.nickname + ":";
-  } else {
-    replyComponent.placeholder = "编辑一条回复吧~";
-  }
-}
-
-// 确认回复
-function confirmReply(index: number, comment: Comment | CommentReply) {
-  // 判断登录
-  if (!userStore.isLogin()) {
-    appStore.loginFlag = true;
-    return;
-  }
-  const replyComponent = replyCommentRef.value[index];
-
-  let content = replyComponent.content;
-  if (content.trim() == "") {
-    window.$message?.error("回复不能为空");
-    return;
-  }
-
-  const path = route.path;
-  const arr = path.split("/");
-  const newComment: CommentNewReq = {
-    topic_id: 0,
-    parent_id: comment.parent_id != 0 ? comment.parent_id : comment.id,
-    reply_user_id: comment.user_id != userStore.userInfo.user_id ? comment.user_id : "",
     comment_content: replaceEmoji(content),
     type: props.commentType,
   };
-  switch (props.commentType) {
-    case 1:
-    case 3:
-      newComment.topic_id = parseInt(arr[2]);
-      break;
-    default:
-      break;
+
+  try {
+    loading.value = true;
+    await CommentAPI.addCommentApi(comment);
+
+    const isReview = blogStore.blogInfo.website_config.website_feature.is_comment_review;
+    showMessage("success", getReviewMessage(isReview));
+
+    queryParams.current = 1;
+    await loadComments();
+    replyRef.value.content = "";
+  } catch (error: any) {
+    showMessage("error", error.message);
+  } finally {
+    loading.value = false;
   }
+};
 
-  CommentAPI.addCommentApi(newComment)
-    .then((res) => {
-      replyCommentIndex.value = -1;
-      const isReview = blogStore.blogInfo.website_config.website_feature.is_comment_review;
-      if (isReview) {
-        window.$message?.success("评论成功，正在审核中");
-      } else {
-        window.$message?.success("评论成功");
-      }
-      // 查询最新评论
-      queryParams.value.current = 1;
-      listComments();
-    })
-    .catch((err) => {
-      window.$message?.error(err.message);
-    });
+const handleClearComment = () => {
+  if (replyRef.value) {
+    replyRef.value.content = "";
+  }
+};
 
-  replyComponent.content = "";
-}
+const handleReply = (index: number, comment: Comment | CommentReply) => {
+  if (replyCommentIndex.value === index) {
+    replyCommentIndex.value = -1;
+    replyTarget.value = null;
+  } else {
+    replyCommentIndex.value = index;
+    replyTarget.value = comment;
+  }
+};
 
-// 取消回复
-function cancelReply(index: number, comment: Comment) {
-  replyCommentIndex.value = -1;
-  const replyComponent = replyCommentRef.value[index];
-  replyComponent.content = "";
-}
+const handleConfirmReply = async (
+  index: number,
+  comment: Comment | CommentReply,
+  content: string
+) => {
+  if (!checkLogin()) return;
 
-// 查看更多回复
-function readMoreComment(index: number, comment: Comment) {
-  const path = route.path;
-  const arr = path.split("/");
-  const data: CommentQueryReq = {
-    page: 1,
-    page_size: 5,
-    topic_id: parseInt(arr[2]) | 0,
-    parent_id: comment.id,
-    // session_id: -1,
-    type: props.commentType,
-    sorts: ["created_at desc"],
-  };
-
-  CommentAPI.findCommentReplyListApi(data).then((res) => {
-    comment.comment_reply_list = res.data.list;
-    // 回复大于5条展示分页
-    if (Math.ceil(comment.reply_count / 5) > 1) {
-      pageRef.value[index].setPaging(true);
-    }
-    // 隐藏查看更多
-    readMoreRef.value[index].style.display = "none";
-  });
-}
-
-function changeReplyCurrent(index: number, comment: Comment, page: number) {
-  // console.log("changeReplyCurrent", current, index, commentId)
-  const path = route.path;
-  const arr = path.split("/");
-  const data: CommentQueryReq = {
-    page: page,
-    page_size: 5,
-    topic_id: parseInt(arr[2]) | 0,
-    parent_id: comment.id,
-    // session_id: -1,
-    type: props.commentType,
-    sorts: ["created_at desc"],
-  };
-
-  CommentAPI.findCommentReplyListApi(data).then((res) => {
-    comment.comment_reply_list = res.data.list;
-  });
-}
-
-function likeComment(comment: Comment | CommentReply) {
-  // 判断登录
-  if (!userStore.isLogin()) {
-    appStore.loginFlag = true;
+  if (!content.trim()) {
+    showMessage("error", "回复不能为空");
     return;
   }
 
-  const data = {
-    id: comment.id,
+  const newComment: NewCommentReq = {
+    topic_id: [1, 3].includes(props.commentType) ? getTopicId() : 0,
+    parent_id: comment.parent_id || comment.id,
+    reply_user_id: replyTarget.value?.user_id || "",
+    comment_content: replaceEmoji(content),
+    type: props.commentType,
   };
-  CommentAPI.likeCommentApi(data).then((res) => {
-    if (userStore.isCommentLike(comment.id)) {
-      window.$message?.error("取消点赞成功");
-      comment.like_count--;
-    } else {
-      window.$message?.success("点赞成功");
-      comment.like_count++;
-    }
-    userStore.commentLike(comment.id);
-  });
-}
 
-// 查看评论
-const listComments = () => {
-  const path = route.path;
-  const arr = path.split("/");
-  const data: CommentQueryReq = {
-    page: queryParams.value.current,
-    page_size: queryParams.value.page_size,
-    topic_id: parseInt(arr[2]) | 0,
+  try {
+    loading.value = true;
+    await CommentAPI.addCommentApi(newComment);
+
+    replyCommentIndex.value = -1;
+    replyTarget.value = null;
+    const isReview = blogStore.blogInfo.website_config.website_feature.is_comment_review;
+    showMessage("success", getReviewMessage(isReview));
+
+    queryParams.current = 1;
+    await loadComments();
+  } catch (error: any) {
+    showMessage("error", error.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleCancelReply = (index: number) => {
+  replyCommentIndex.value = -1;
+  replyTarget.value = null;
+};
+
+const handleLikeComment = async (comment: Comment | CommentReply) => {
+  if (!checkLogin()) return;
+
+  try {
+    await CommentAPI.likeCommentApi({ id: comment.id });
+
+    const isLiked = userStore.isCommentLike(comment.id);
+    if (isLiked) {
+      comment.like_count--;
+      showMessage("success", "取消点赞成功");
+    } else {
+      comment.like_count++;
+      showMessage("success", "点赞成功");
+    }
+
+    userStore.commentLike(comment.id);
+  } catch (error: any) {
+    showMessage("error", error.message);
+  }
+};
+
+const handleReadMoreComment = async (index: number, comment: Comment) => {
+  const queryData: QueryCommentReq = {
+    page: 1,
+    page_size: 5,
+    topic_id: getTopicId(),
+    parent_id: comment.id,
+    type: props.commentType,
+    sorts: ["created_at desc"],
+  };
+
+  try {
+    const res = await CommentAPI.findCommentReplyListApi(queryData);
+    comment.comment_reply_list = res.data.list;
+
+    // 如果回复数量大于5条，显示分页
+    if (Math.ceil(comment.reply_count / 5) > 1) {
+      // 通过nextTick确保分页组件正常显示
+      nextTick(() => {
+        // 分页组件会自动显示
+      });
+    }
+  } catch (error: any) {
+    showMessage("error", error.message);
+  }
+};
+
+const handleChangeReplyCurrent = async (index: number, comment: Comment, page: number) => {
+  const queryData: QueryCommentReq = {
+    page,
+    page_size: 5,
+    topic_id: getTopicId(),
+    parent_id: comment.id,
+    type: props.commentType,
+    sorts: ["created_at desc"],
+  };
+
+  try {
+    const res = await CommentAPI.findCommentReplyListApi(queryData);
+    comment.comment_reply_list = res.data.list;
+  } catch (error: any) {
+    showMessage("error", error.message);
+  }
+};
+
+const handleCollapseComment = (index: number, comment: Comment) => {
+  comment.comment_reply_list = [];
+};
+
+// 原始的changeReplyCurrent函数
+const changeReplyCurrent = (index: number, comment: Comment, current: number) => {
+  handleChangeReplyCurrent(index, comment, current);
+};
+
+// 加载评论
+const loadComments = async () => {
+  const queryData: QueryCommentReq = {
+    page: queryParams.current,
+    page_size: queryParams.page_size,
+    topic_id: getTopicId(),
     parent_id: 0,
     type: props.commentType,
     sorts: ["created_at desc"],
   };
 
-  CommentAPI.findCommentListApi(data).then((res) => {
-    if (queryParams.value.current === 1) {
+  try {
+    loading.value = true;
+    const res = await CommentAPI.findCommentListApi(queryData);
+
+    if (queryParams.current === 1) {
       commentList.value = res.data.list;
     } else {
       commentList.value.push(...res.data.list);
     }
-    queryParams.value.current = res.data.page + 1;
-    queryParams.value.page_size = res.data.page_size;
+
+    queryParams.current = res.data.page + 1;
+    queryParams.page_size = res.data.page_size;
     count.value = res.data.total;
-  });
+
+    emit("getCommentCount", count.value);
+  } catch (error: any) {
+    showMessage("error", error.message);
+  } finally {
+    loading.value = false;
+  }
 };
 
-onMounted(() => {
+const loadMoreComments = () => {
+  loadComments();
+};
+
+// 生命周期
+onMounted(async () => {
   if (userStore.isLogin()) {
-    userStore.getUserLike();
+    await userStore.getUserLike();
   }
-  listComments();
+  await loadComments();
 });
 </script>
 
@@ -392,112 +347,20 @@ onMounted(() => {
   line-height: 40px;
 }
 
-.sub-reply-avatar {
-  position: absolute;
-  left: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-}
-
-.reply-comment {
+.loading-warp {
   display: flex;
-  padding-top: 1rem;
+  justify-content: center;
+  padding: 20px;
 
-  .content-warp {
-    flex: auto;
-    margin-left: 0.6rem;
-  }
-
-  .bottom-line {
-    border-bottom: 1px solid var(--grey-3);
-    margin-top: 0.5rem;
+  .btn {
+    min-width: 120px;
   }
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-
-  .user-name {
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-right: 0.3125rem;
-  }
-}
-
-.sub-reply-comment {
-  position: relative;
-  padding: 8px 0 8px 33px;
-  font-size: 15px;
-  line-height: 24px;
-
-  .sub-user-info {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 9px;
-    line-height: 24px;
-  }
-
-  .sub-user-name {
-    font-size: 13px;
-    line-height: 24px;
-  }
-}
-
-.reply-info {
-  display: flex;
-  align-items: center;
-  margin-top: 0.125rem;
-  font-size: 0.8125rem;
-  color: #9499a0;
-
-  .reply-time {
-    margin-right: 15px;
-    padding-top: 2px;
-  }
-
-  .reply-like {
-    display: flex;
-    align-items: center;
-    margin-right: 17px;
-    cursor: pointer;
-
-    &:hover .like {
-      color: var(--color-pink);
-    }
-  }
-
-  .reply-btn {
-    cursor: pointer;
-
-    &:hover {
-      color: var(--color-pink);
-    }
-  }
-}
-
-.reply-content {
-  overflow: hidden;
-  word-wrap: break-word;
-  word-break: break-word;
-  white-space: pre-wrap;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  vertical-align: baseline;
-}
-
-.view-more {
-  font-size: 13px;
-  color: #9499a0;
-
-  .view-more-btn {
-    cursor: pointer;
-
-    &:hover {
-      color: var(--color-pink);
-    }
-  }
+.empty-comments {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--text-color-3);
+  font-size: 14px;
 }
 </style>

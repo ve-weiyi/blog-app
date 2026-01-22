@@ -114,10 +114,7 @@ const handleRegister = () => {
     loading.value = false;
   });
 };
-const dialogVisible = computed({
-  get: () => appStore.registerFlag,
-  set: (value) => (appStore.registerFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 const handleLogin = () => {
   appStore.setRegisterFlag(false);
   appStore.setLoginFlag(true);

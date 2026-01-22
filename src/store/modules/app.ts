@@ -42,6 +42,9 @@ export const useAppStore = defineStore("useAppStore", {
     setCollapse(flag: boolean) {
       this.isCollapse = flag;
     },
+    setSearchFlag(flag: boolean) {
+      this.searchFlag = flag;
+    },
     setLoginFlag(flag: boolean) {
       this.loginFlag = flag;
     },
@@ -63,6 +66,9 @@ export const useAppStore = defineStore("useAppStore", {
     setPhoneBindFlag(flag: boolean) {
       this.phoneBindFlag = flag;
     },
+    setThirdBindFlag(flag: boolean) {
+      this.thirdBindFlag = flag;
+    }
   },
   getters: {},
   persist: {

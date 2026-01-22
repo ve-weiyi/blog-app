@@ -1,38 +1,56 @@
 import request from "@/utils/request";
 import type {
-  ArticleArchivesQueryReq,
-  ArticleClassifyQueryReq,
   ArticleDetails,
-  ArticleHomeQueryReq,
   EmptyReq,
   EmptyResp,
   IdReq,
   PageResp,
+  QueryArticleArchivesReq,
+  QueryArticleClassifyReq,
+  QueryArticleHomeReq
 } from "./types";
 
 export const ArticleAPI = {
   /** 文章归档(时间轴) */
-  findArticleArchivesApi(data?: ArticleArchivesQueryReq): Promise<IApiResponse<PageResp>> {
+  findArticleArchivesApi(data?: QueryArticleArchivesReq): Promise<IApiResponse<PageResp>> {
     return request({
-      url: "/blog-api/v1/article/get_article_archives",
+      url: "/blog-api/v1/article/find_article_archives",
       method: "POST",
       data: data,
     });
   },
 
   /** 通过分类获取文章列表 */
-  findArticleClassifyCategoryApi(data?: ArticleClassifyQueryReq): Promise<IApiResponse<PageResp>> {
+  findArticleClassifyCategoryApi(data?: QueryArticleClassifyReq): Promise<IApiResponse<PageResp>> {
     return request({
-      url: "/blog-api/v1/article/get_article_classify_category",
+      url: "/blog-api/v1/article/find_article_classify_category",
       method: "POST",
       data: data,
     });
   },
 
   /** 通过标签获取文章列表 */
-  findArticleClassifyTagApi(data?: ArticleClassifyQueryReq): Promise<IApiResponse<PageResp>> {
+  findArticleClassifyTagApi(data?: QueryArticleClassifyReq): Promise<IApiResponse<PageResp>> {
     return request({
-      url: "/blog-api/v1/article/get_article_classify_tag",
+      url: "/blog-api/v1/article/find_article_classify_tag",
+      method: "POST",
+      data: data,
+    });
+  },
+
+  /** 获取首页文章列表 */
+  findArticleHomeListApi(data?: QueryArticleHomeReq): Promise<IApiResponse<PageResp>> {
+    return request({
+      url: "/blog-api/v1/article/find_article_home_list",
+      method: "POST",
+      data: data,
+    });
+  },
+
+  /** 获取首页推荐文章列表 */
+  findArticleRecommendApi(data?: EmptyReq): Promise<IApiResponse<PageResp>> {
+    return request({
+      url: "/blog-api/v1/article/find_article_recommend",
       method: "POST",
       data: data,
     });
@@ -47,29 +65,11 @@ export const ArticleAPI = {
     });
   },
 
-  /** 获取首页文章列表 */
-  findArticleHomeListApi(data?: ArticleHomeQueryReq): Promise<IApiResponse<PageResp>> {
-    return request({
-      url: "/blog-api/v1/article/get_article_home_list",
-      method: "POST",
-      data: data,
-    });
-  },
-
-  /** 获取首页推荐文章列表 */
-  findArticleRecommendApi(data?: EmptyReq): Promise<IApiResponse<PageResp>> {
-    return request({
-      url: "/blog-api/v1/article/get_article_recommend",
-      method: "POST",
-      data: data,
-    });
-  },
-
   /** 点赞文章 */
   likeArticleApi(data?: IdReq): Promise<IApiResponse<EmptyResp>> {
     return request({
       url: "/blog-api/v1/article/like_article",
-      method: "POST",
+      method: "PUT",
       data: data,
     });
   },

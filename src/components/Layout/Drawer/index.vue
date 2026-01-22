@@ -50,7 +50,7 @@
           </li>
         </template>
         <li v-if="!userStore.isLogin()" class="item">
-          <a @click="appStore.loginFlag = true">
+          <a @click="appStore.setLoginFlag(true)">
             <svg-icon icon-class="user"></svg-icon>
             登录
           </a>

@@ -1,5 +1,5 @@
 <template>
-  <div v-show="show" class="view-more-pagination">
+  <div class="view-more-pagination">
     <span class="pagination-page-count">共{{ totalPage }}页</span>
     <span v-if="current !== 1" class="pagination-btn" @click="prePage">上一页</span>
     <template v-for="(number, index) in visibleNumber">
@@ -20,8 +20,7 @@
 <script setup lang="ts">
 const current = ref(1);
 const page = ref(5);
-const show = ref(false);
-const emit = defineEmits(["getCurrentPage"]);
+const emit = defineEmits(["pageChange"]);
 const props = defineProps({
   total: {
     type: Number,
@@ -31,7 +30,7 @@ const props = defineProps({
 const totalPage = computed(() => Math.ceil(props.total / page.value));
 const visibleNumber = computed(() => {
   if (totalPage.value <= 5) {
-    return totalPage.value;
+    return Array.from({ length: totalPage.value }, (_, i) => i + 1);
   } else {
     if (current.value <= 4) {
       return [1, 2, 3, 4, 5, "...", totalPage.value];
@@ -63,20 +62,18 @@ const visibleNumber = computed(() => {
 });
 const prePage = () => {
   current.value -= 1;
-  emit("getCurrentPage", current.value);
+  emit("pageChange", current.value);
 };
 const changePage = (number: number) => {
   current.value = number;
-  emit("getCurrentPage", number);
+  emit("pageChange", number);
 };
 const nextPage = () => {
   current.value += 1;
-  emit("getCurrentPage", current.value);
+  emit("pageChange", current.value);
 };
-const setPaging = (flag: boolean) => {
-  show.value = flag;
-};
-defineExpose({ current, setPaging });
+
+defineExpose({ current });
 </script>
 
 <style lang="scss" scoped>

@@ -33,10 +33,7 @@ const userStore = useUserStore();
 const appStore = useAppStore();
 const blogStore = useBlogStore();
 
-const dialogVisible = computed({
-  get: () => appStore.thirdBindFlag,
-  set: (value) => (appStore.thirdBindFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 
 const availablePlatforms = computed(() => {
   return blogStore.blogInfo.website_config.social_login_list.filter((platform) => {
@@ -56,7 +53,7 @@ const handleBindAccount = (platform: string) => {
   })
     .then((res) => {
       if (res.data?.authorize_url) {
-        appStore.thirdBindFlag = false;
+        appStore.setThirdBindFlag(false);
         // 跳转到授权页面
         let url = res.data.authorize_url;
         console.log("第三方登录平台:", platform, state, url);

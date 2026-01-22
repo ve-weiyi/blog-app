@@ -15,10 +15,10 @@
       >
         <div class="talk-meta">
           <!-- 用户头像 -->
-          <img :src="talk.user?.avatar" class="user-avatar" />
+          <img :src="talk.user_info?.avatar" class="user-avatar" />
           <div class="talk-info">
             <span class="talk-user-name">
-              {{ talk.user?.nickname }}
+              {{ talk.user_info?.nickname }}
               <svg-icon icon-class="badge" style="margin-left: 0.4rem"></svg-icon>
             </span>
             <span class="talk-time">{{ formatDateTime(talk.created_at) }}</span>
@@ -59,7 +59,7 @@
 
 <script lang="ts" setup>
 import { TalkAPI } from "@/api/talk";
-import type { TagQueryReq, Talk } from "@/api/types";
+import type { QueryTagReq, Talk } from "@/api/types";
 
 import { formatDateTime } from "@/utils/date";
 import { useBlogStore } from "@/store";
@@ -72,7 +72,7 @@ const data = reactive({
   queryParams: {
     page: 1,
     page_size: 5,
-  } as TagQueryReq,
+  } as QueryTagReq,
   talkList: [] as Talk[],
 });
 const { count, queryParams, talkList } = toRefs(data);

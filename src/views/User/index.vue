@@ -65,11 +65,11 @@
                 <n-button
                   v-if="userStore.userInfo.phone"
                   color="#49b1f5"
-                  @click="appStore.phoneBindFlag = true"
+                  @click="appStore.setPhoneBindFlag(true)"
                 >
                   修改手机号
                 </n-button>
-                <n-button v-else color="#49b1f5" @click="appStore.phoneBindFlag = true">
+                <n-button v-else color="#49b1f5" @click="appStore.setPhoneBindFlag(true)">
                   立即绑定
                 </n-button>
               </n-input-group>
@@ -81,7 +81,7 @@
                   :underline="false"
                   :focusable="false"
                   style="color: #2080f0; --n-text-color-hover: #4098fc"
-                  @click.prevent="appStore.thirdBindFlag = true"
+                  @click.prevent="appStore.setThirdBindFlag(true)"
                 >
                   去绑定
                 </n-a>

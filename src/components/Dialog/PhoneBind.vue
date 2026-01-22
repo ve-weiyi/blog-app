@@ -78,10 +78,7 @@ const sendCode = () => {
     window.$message?.success("发送成功");
   });
 };
-const dialogVisible = computed({
-  get: () => appStore.phoneBindFlag,
-  set: (value) => (appStore.phoneBindFlag = value),
-});
+const dialogVisible = defineModel<boolean>();
 const handleUpdate = () => {
   if (phoneForm.value.verify_code.trim().length != 6) {
     window.$message?.warning("请输入6位验证码");

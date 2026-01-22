@@ -39,7 +39,7 @@ import { useUserStore } from "@/store";
 import type { UploadCustomRequestOptions } from "naive-ui";
 import { VueCropper } from "vue-cropper";
 import "vue-cropper/dist/index.css";
-import { UploadAPI } from "@/api/upload";
+import { UploadAPI } from "@/api/upload_file.ts";
 
 // 父组件向子组件传输的数据
 const props = defineProps({

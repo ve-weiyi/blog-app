@@ -11,21 +11,21 @@
       </main>
       <Footer></Footer>
       <Tool></Tool>
-      <Search></Search>
-      <Login></Login>
-      <Register></Register>
-      <Forget></Forget>
-      <EmailBind></EmailBind>
-      <PhoneBind></PhoneBind>
-      <ThirdBind></ThirdBind>
       <Drawer></Drawer>
+      <Search v-model="appStore.searchFlag" />
+      <Login v-model="appStore.loginFlag" />
+      <Register v-model="appStore.registerFlag" />
+      <Forget v-model="appStore.forgetFlag" />
+      <EmailBind v-model="appStore.emailBindFlag" />
+      <PhoneBind v-model="appStore.phoneBindFlag" />
+      <ThirdBind v-model="appStore.thirdBindFlag" />
       <!--      <MusicPlayer></MusicPlayer>-->
       <!-- 音乐播放器 -->
       <Player v-if="blogStore.blogInfo.website_config.website_feature.is_music_player === 1" />
       <!-- 聊天室 -->
-      <ChatRoom
-        v-if="blogStore.blogInfo.website_config.website_feature.is_chat_room === 1"
-      ></ChatRoom>
+      <ChatRoom v-if="blogStore.blogInfo.website_config.website_feature.is_chat_room === 1" />
+      <!-- AI助手 -->
+      <AiAssistant v-if="blogStore.blogInfo.website_config.website_feature.is_ai_assistant === 1" />
     </div>
   </Provider>
 </template>
@@ -43,12 +43,13 @@ import ThirdBind from "@/components/Dialog/ThirdBind.vue";
 import PhoneBind from "@/components/Dialog/PhoneBind.vue";
 import Tool from "@/components/Tool/index.vue";
 import ChatRoom from "@/components/ChatRoom/index.vue";
-import Player from "./components/zw-player/player.vue";
+import AiAssistant from "@/components/AiAssistant/index.vue";
 
-import { useBlogStore, useUserStore } from "@/store";
+import { useAppStore, useBlogStore, useUserStore } from "@/store";
 
 const blogStore = useBlogStore();
 const userStore = useUserStore();
+const appStore = useAppStore();
 
 const isMobile = computed(() => {
   const flag = navigator.userAgent.match(
@@ -63,6 +64,18 @@ onBeforeMount(async () => {
 });
 
 onMounted(() => {
+  blogStore.blogInfo.notice_list?.forEach((notice) => {
+    const level = notice.level.toLowerCase();
+    if (level === "info" || level === "success" || level === "warning" || level === "error") {
+      window.$notification[level]({
+        title: () => h("div", { innerHTML: notice.title }),
+        content: () => h("div", { innerHTML: notice.content }),
+        duration: 5000,
+        keepAliveOnHover: true,
+      });
+    }
+  });
+
   console.log(
     "%c Hello World %c By 与梦 %c",
     "background:#e9546b ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff; padding:5px 0;",

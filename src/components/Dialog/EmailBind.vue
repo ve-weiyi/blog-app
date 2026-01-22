@@ -29,13 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useUserStore } from "@/store";
+import { useUserStore } from "@/store";
 import { useIntervalFn } from "@vueuse/core";
 import { AuthAPI } from "@/api/auth";
 import { UserAPI } from "@/api/user.ts";
 
+const dialogVisible = defineModel<boolean>();
+
 const userStore = useUserStore();
-const appStore = useAppStore();
 const data = reactive({
   timer: 0,
   flag: false,
@@ -78,10 +79,6 @@ const sendCode = () => {
     window.$message?.success("发送成功");
   });
 };
-const dialogVisible = computed({
-  get: () => appStore.emailBindFlag,
-  set: (value) => (appStore.emailBindFlag = value),
-});
 const handleUpdate = () => {
   if (emailForm.value.verify_code.trim().length != 6) {
     window.$message?.warning("请输入6位验证码");

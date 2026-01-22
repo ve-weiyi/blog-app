@@ -246,7 +246,7 @@ onMounted(() => {
 
 .article-container {
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 0 1rem var(--box-bg-shadow);
 }
 

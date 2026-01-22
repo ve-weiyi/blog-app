@@ -10,7 +10,7 @@
     :to="false"
   >
     <template #trigger>
-      <span><svg-icon icon-class="emoji"></svg-icon></span>
+      <span><svg-icon icon-class="emoji" size="20"></svg-icon></span>
     </template>
     <template #header>
       <div class="emoji-title">

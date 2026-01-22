@@ -17,7 +17,7 @@
         <svg-icon
           style="cursor: pointer"
           icon-class="search"
-          @click="appStore.searchFlag = true"
+          @click="appStore.setSearchFlag(true)"
         ></svg-icon>
       </li>
     </ul>

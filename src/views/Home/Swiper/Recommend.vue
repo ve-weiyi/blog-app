@@ -11,12 +11,14 @@
     :pagination="{ clickable: true }"
   >
     <swiper-slide v-for="article in articleList" :key="article.id">
-      <div class="slide-content" :style="articleCover(article.article_cover)">
-        <router-link :to="`/article/${article.id}`" class="slide-title"
-          >{{ article.article_title }}
-        </router-link>
+      <router-link
+        :to="`/article/${article.id}`"
+        class="slide-content"
+        :style="articleCover(article.article_cover)"
+      >
+        <div class="slide-title">{{ article.article_title }}</div>
         <span class="slide-time">发布时间：{{ formatDate(article.created_at) }}</span>
-      </div>
+      </router-link>
     </swiper-slide>
   </swiper>
 </template>
@@ -71,6 +73,12 @@ onMounted(() => {
   padding: 0 3.125rem 1.25rem;
   background-position: center !important;
   background-size: cover !important;
+  cursor: pointer;
+  transition: transform 0.3s;
+
+  &:hover {
+    transform: scale(1.02);
+  }
 
   .slide-title {
     font-size: 2rem;

@@ -5,9 +5,10 @@ import type {
   EmptyResp,
   GetCaptchaCodeReq,
   GetCaptchaCodeResp,
+  GetClientInfoReq,
+  GetClientInfoResp,
   GetOauthAuthorizeUrlReq,
   GetOauthAuthorizeUrlResp,
-  GetTouristInfoResp,
   LoginReq,
   LoginResp,
   PhoneLoginReq,
@@ -15,14 +16,14 @@ import type {
   ResetPasswordReq,
   SendEmailVerifyCodeReq,
   SendPhoneVerifyCodeReq,
-  ThirdLoginReq,
+  ThirdLoginReq
 } from "./types";
 
 export const AuthAPI = {
-  /** 获取游客身份信息 */
-  getTouristInfoApi(data?: EmptyReq): Promise<IApiResponse<GetTouristInfoResp>> {
+  /** 获取客户端信息 */
+  getClientInfoApi(data?: GetClientInfoReq): Promise<IApiResponse<GetClientInfoResp>> {
     return request({
-      url: "/blog-api/v1/get_tourist_info",
+      url: "/blog-api/v1/get_client_info",
       method: "GET",
       data: data,
     });
@@ -131,7 +132,7 @@ export const AuthAPI = {
   logoutApi(data?: EmptyReq): Promise<IApiResponse<EmptyResp>> {
     return request({
       url: "/blog-api/v1/logout",
-      method: "POST",
+      method: "GET",
       data: data,
     });
   },

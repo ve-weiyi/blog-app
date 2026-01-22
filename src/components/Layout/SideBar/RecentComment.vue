@@ -8,11 +8,11 @@
     <!-- 评论 -->
     <div v-for="comment in commentList" :key="comment.id" class="comment-item">
       <!-- 头像 -->
-      <img class="user-avatar" :src="comment.user?.avatar" alt="" />
+      <img class="user-avatar" :src="comment.user_info?.avatar" alt="" />
       <div class="comment-content">
         <div class="info">
           <!-- 昵称 -->
-          <span class="comment-name">{{ comment.user?.nickname }}</span>
+          <span class="comment-name">{{ comment.user_info?.nickname }}</span>
           <!-- 时间 -->
           <div>{{ formatDate(comment.created_at) }}</div>
         </div>
@@ -26,11 +26,11 @@
 <script setup lang="ts">
 import { CommentAPI } from "@/api/comment";
 import { formatDate } from "@/utils/date";
-import type { Comment, CommentQueryReq } from "@/api/types";
+import type { Comment, QueryCommentReq } from "@/api/types";
 
 const commentList = ref<Comment[]>([]);
 onMounted(() => {
-  const data: CommentQueryReq = {
+  const data: QueryCommentReq = {
     page: 1,
     page_size: 5,
   };
