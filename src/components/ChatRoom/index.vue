@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore, useUserStore } from "@/store";
+import { useBlogStore, useUserStore } from "@/stores";
 import { formatDateTime } from "@/utils/date";
 import { emojiList } from "@/utils/emoji";
 import { tvList } from "@/utils/tv";
@@ -146,7 +146,7 @@ interface MessageEvent {
 interface ChatMessageEvent {
   id: number; // 主键
   user_id: string; // 用户id
-  terminal_id: string; // 设备id
+  device_id: string; // 设备id
   nickname: string; // 昵称
   avatar: string; // 头像
   ip_address: string; // ip地址
@@ -190,7 +190,7 @@ interface HistoryMessageEvent {
   total: number;
 }
 
-interface ClientInfo {
+interface GuestInfo {
   ip_address: string;
   ip_source: string;
 }
@@ -214,7 +214,7 @@ const backBtn = ref<HTMLElement[]>([]);
 
 const defaultAvatar = ref(blogStore.blogInfo.website_config.tourist_avatar);
 
-const clientInfo = reactive<ClientInfo>({
+const clientInfo = reactive<GuestInfo>({
   ip_address: "",
   ip_source: "",
 });
@@ -248,7 +248,7 @@ const initStomp = () => {
       connectHeaders: {
         login: AuthStorage.getUid() || "",
         passcode: AuthStorage.getToken() || "",
-        client: AuthStorage.getTerminalId(),
+        client: AuthStorage.getDeviceId(),
       },
       brokerURL: url,
       reconnectDelay: WS_CONFIG.RECONNECT_DELAY,

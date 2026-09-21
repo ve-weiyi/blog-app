@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 const socialList = computed(() => {

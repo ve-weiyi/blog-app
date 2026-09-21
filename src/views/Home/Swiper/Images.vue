@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 const carouselList = ref<string[]>([]);
@@ -83,7 +83,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .imgs {
   position: fixed;

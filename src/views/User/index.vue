@@ -55,15 +55,15 @@
                 </n-button>
               </n-input-group>
             </n-form-item>
-            <n-form-item label="手机号" label-style="color: var(--text-color);" path="phone">
+            <n-form-item label="手机号" label-style="color: var(--text-color);" path="mobile">
               <n-input-group>
                 <n-input
-                  v-model:value="userStore.userInfo.phone"
+                  v-model:value="userStore.userInfo.mobile"
                   placeholder="请输入手机号"
                   disabled
                 ></n-input>
                 <n-button
-                  v-if="userStore.userInfo.phone"
+                  v-if="userStore.userInfo.mobile"
                   color="#49b1f5"
                   @click="appStore.setPhoneBindFlag(true)"
                 >
@@ -128,10 +128,10 @@
 </template>
 
 <script setup lang="ts">
-import { UserAPI } from "@/api/user";
-import type { UserInfoResp } from "@/api/types";
+import { MeAPI } from "@/api";
+import type { GetMeResp } from "@/api";
 import type { FormInst } from "naive-ui";
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 import UserAvatar from "@/components/UserAvatar/index.vue";
 
 const userStore = useUserStore();
@@ -147,7 +147,7 @@ const rules = {
     message: "昵称不能为空",
   },
 };
-const userForm = ref<UserInfoResp>(<UserInfoResp>{
+const userForm = ref<GetMeResp>(<GetMeResp>{
   avatar: userStore.userInfo.avatar,
   nickname: userStore.userInfo.nickname,
   intro: userStore.userInfo.intro,
@@ -156,7 +156,7 @@ const userForm = ref<UserInfoResp>(<UserInfoResp>{
 const handleUpdate = () => {
   formInstRef.value?.validate((errors) => {
     if (!errors) {
-      UserAPI.updateUserInfoApi(userForm.value).then((res) => {
+      MeAPI.updateMe(userForm.value).then((res) => {
         userStore.getUserInfo();
         window.$message?.success("修改成功");
       });
@@ -167,7 +167,7 @@ const handleUpdate = () => {
 const handleAvatarUpload = (data) => {
   console.log("handleAvatarUpload", data);
   userForm.value.avatar = data.file_url;
-  UserAPI.updateUserInfoApi(userForm.value).then((res) => {
+  MeAPI.updateMe(userForm.value).then((res) => {
     userStore.getUserInfo();
     window.$message?.success("修改成功");
     showCropper.value = false;
@@ -194,7 +194,7 @@ const getUserPlatformInfo = (platform: string) => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .title {
   font-size: 1.25rem;

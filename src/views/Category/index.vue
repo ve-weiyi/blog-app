@@ -21,10 +21,10 @@
 </template>
 
 <script setup lang="ts">
-import { CategoryAPI } from "@/api/category";
-import type { Category } from "@/api/types";
+import { CategoryAPI } from "@/api";
+import type { Category } from "@/api";
 import Echarts from "@/components/Echarts/index.vue";
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
@@ -60,7 +60,7 @@ let categoryOption = reactive({
 });
 const categoryList = ref<Category[]>([]);
 onMounted(() => {
-  CategoryAPI.findCategoryListApi().then((res) => {
+  CategoryAPI.queryCategoryList().then((res) => {
     categoryList.value = res.data.list;
     if (categoryList.value != null) {
       categoryList.value.forEach((item) => {
@@ -75,7 +75,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .category-list {
   @include flex;

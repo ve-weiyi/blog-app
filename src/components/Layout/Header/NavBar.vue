@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 
 const userStore = useUserStore();
 const appStore = useAppStore();

@@ -1,5 +1,5 @@
 import "@/assets/fonts/font.css";
-import "@/assets/styles/index.scss";
+import "@/styles/index.scss";
 import "@/permission";
 import "nprogress/nprogress.css";
 import "swiper/css";

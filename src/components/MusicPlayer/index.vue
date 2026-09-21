@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 import aplayer from "./aplayer.vue";
 
 const blogStore = useBlogStore();

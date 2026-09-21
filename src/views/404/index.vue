@@ -1,11 +1,7 @@
 <template>
   <div class="page-header">
     <h1 class="page-title">页面不存在</h1>
-    <img
-      class="page-cover"
-      src="https://static.veweiyi.cn/blog/cover/zhuque.jpg"
-      alt=""
-    />
+    <img class="page-cover" src="https://static.veweiyi.cn/blog/cover/zhuque.jpg" alt="" />
     <Waves></Waves>
   </div>
   <div class="bg">

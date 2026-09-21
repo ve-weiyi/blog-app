@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/store";
-import { UserAPI } from "@/api/user.ts";
+import { useUserStore } from "@/stores";
+import { MeAPI } from "@/api";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -25,7 +25,7 @@ onMounted(() => {
 
   switch (state) {
     case "bind_account":
-      UserAPI.updateUserBindThirdPartyApi({
+      MeAPI.bindMeThirdParty({
         platform: platform,
         code: code,
       })

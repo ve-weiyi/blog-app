@@ -9,7 +9,7 @@
     :block-scroll="false"
   >
     <div class="login-title">绑定手机号</div>
-    <n-input v-model:value="phoneForm.phone" class="mt-11" placeholder="手机号"></n-input>
+    <n-input v-model:value="phoneForm.mobile" class="mt-11" placeholder="手机号"></n-input>
     <n-input-group class="mt-11">
       <n-input v-model:value="phoneForm.verify_code" placeholder="验证码" />
       <n-button color="#49b1f5" :disabled="flag" @click="sendCode">
@@ -29,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useUserStore } from "@/store";
+import { useAppStore, useUserStore } from "@/stores";
 import { useIntervalFn } from "@vueuse/core";
-import { AuthAPI } from "@/api/auth";
-import { UserAPI } from "@/api/user.ts";
+import { AuthAPI } from "@/api";
+import { MeAPI } from "@/api";
 
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -41,7 +41,7 @@ const data = reactive({
   flag: false,
   loading: false,
   phoneForm: {
-    phone: "",
+    mobile: "",
     verify_code: "",
   },
 });
@@ -66,14 +66,14 @@ const start = (time: number) => {
 };
 const sendCode = () => {
   let reg = /^1[3-9]\d{9}$/;
-  if (!reg.test(phoneForm.value.phone)) {
+  if (!reg.test(phoneForm.value.mobile)) {
     window.$message?.warning("手机号格式不正确");
     return;
   }
   start(60);
-  AuthAPI.sendPhoneVerifyCodeApi({
-    phone: phoneForm.value.phone,
-    type: "bind_phone",
+  AuthAPI.sendMobileCode({
+    mobile: phoneForm.value.mobile,
+    type: "bind_mobile",
   }).then((res) => {
     window.$message?.success("发送成功");
   });
@@ -85,15 +85,15 @@ const handleUpdate = () => {
     return;
   }
   loading.value = true;
-  UserAPI.updateUserBindPhoneApi({
-    phone: phoneForm.value.phone,
+  MeAPI.bindMeMobile({
+    mobile: phoneForm.value.mobile,
     verify_code: phoneForm.value.verify_code,
   })
     .then((res) => {
       window.$message?.success("修改成功");
-      userStore.userInfo.phone = phoneForm.value.phone;
+      userStore.userInfo.mobile = phoneForm.value.mobile;
       phoneForm.value = {
-        phone: "",
+        mobile: "",
         verify_code: "",
       };
       dialogVisible.value = false;

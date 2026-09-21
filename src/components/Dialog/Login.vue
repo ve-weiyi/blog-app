@@ -9,7 +9,7 @@
   >
     <div class="login-title">登录账号</div>
     <n-input
-      v-model:value="loginForm.username"
+      v-model:value="loginForm.account"
       class="mt-11"
       placeholder="邮箱号"
       @keyup.enter="handleLogin"
@@ -53,17 +53,17 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { AuthAPI } from "@/api/auth";
-import type { GetOauthAuthorizeUrlReq, LoginReq } from "@/api/types";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
+import { AuthAPI } from "@/api";
+import type { GetOauthAuthorizeUrlReq, PasswordLoginReq } from "@/api";
 
 const appStore = useAppStore();
 const userStore = useUserStore();
 const blogStore = useBlogStore();
 const route = useRoute();
 const loading = ref(false);
-const loginForm = ref<LoginReq>({
-  username: "",
+const loginForm = ref<PasswordLoginReq>({
+  account: "",
   password: "",
 });
 const dialogVisible = defineModel<boolean>();
@@ -86,7 +86,7 @@ const oauthLogin = (platform: string) => {
     platform: platform,
     state: route.path,
   };
-  AuthAPI.getOauthAuthorizeUrlApi(oauth).then((res) => {
+  AuthAPI.getOauthAuthorizeUrl(oauth).then((res) => {
     appStore.setLoginFlag(false);
     console.log(res.data.authorize_url);
     // 新启页面跳转
@@ -97,7 +97,7 @@ const oauthLogin = (platform: string) => {
   });
 };
 const handleLogin = () => {
-  if (loginForm.value.username.trim().length == 0) {
+  if (loginForm.value.account.trim().length == 0) {
     window.$message?.warning("用户名最小长度是6");
     return;
   }
@@ -107,7 +107,7 @@ const handleLogin = () => {
   }
   loading.value = true;
   userStore
-    .login(loginForm.value)
+    .login({ account: loginForm.value.account, password: loginForm.value.password })
     .then((res) => {
       window.$message?.success("登录成功");
 
@@ -118,7 +118,7 @@ const handleLogin = () => {
       });
 
       loginForm.value = {
-        username: "",
+        account: "",
         password: "",
       };
       appStore.setLoginFlag(false);

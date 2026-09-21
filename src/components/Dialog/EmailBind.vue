@@ -29,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/store";
+import { useUserStore } from "@/stores";
 import { useIntervalFn } from "@vueuse/core";
-import { AuthAPI } from "@/api/auth";
-import { UserAPI } from "@/api/user.ts";
+import { AuthAPI } from "@/api";
+import { MeAPI } from "@/api";
 
 const dialogVisible = defineModel<boolean>();
 
@@ -72,7 +72,7 @@ const sendCode = () => {
     return;
   }
   start(60);
-  AuthAPI.sendEmailVerifyCodeApi({
+  AuthAPI.sendEmailCode({
     email: emailForm.value.email,
     type: "bind_email",
   }).then((res) => {
@@ -85,7 +85,7 @@ const handleUpdate = () => {
     return;
   }
   loading.value = true;
-  UserAPI.updateUserBindEmailApi({
+  MeAPI.bindMeEmail({
     email: emailForm.value.email,
     verify_code: emailForm.value.verify_code,
   })

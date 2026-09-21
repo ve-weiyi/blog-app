@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "@/store";
+import { useAppStore } from "@/stores";
 import { useEventListener, useScroll } from "@vueuse/core";
 
 const appStore = useAppStore();
@@ -54,7 +54,7 @@ const handleBackToTop = () => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .tool {
   position: fixed;

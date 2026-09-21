@@ -14,7 +14,7 @@
           </span>
           <span class="item">
             <svg-icon icon-class="eye" style="margin-right: 0.15rem"></svg-icon>
-            <span class="text">阅读量 </span>{{ article.views_count }}</span
+            <span class="text">阅读量 </span>{{ article.view_count }}</span
           >
         </div>
         <div class="second-meta">
@@ -174,9 +174,9 @@
 
 <script setup lang="ts">
 import VMdPreview from "@kangc/v-md-editor/lib/preview";
-import { ArticleAPI } from "@/api/article";
-import type { ArticleDetails } from "@/api/types";
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { ArticleAPI } from "@/api";
+import type { ArticleDetails } from "@/api";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 import { formatDate } from "@/utils/date";
 import { Share } from "vue3-social-share";
 import "vue3-social-share/lib/index.css";
@@ -217,7 +217,7 @@ const like = () => {
     return;
   }
   let id = article.value.id;
-  ArticleAPI.likeArticleApi({ id }).then((res) => {
+  ArticleAPI.likeArticle({ id: id }).then((res) => {
     //判断是否点赞
     if (userStore.isArticleLike(id)) {
       window.$message?.error("取消点赞成功");
@@ -231,7 +231,7 @@ const like = () => {
 };
 onMounted(() => {
   const id = Number(route.params.id);
-  ArticleAPI.getArticleDetailsApi({ id }).then((res) => {
+  ArticleAPI.getArticle({ id: id }).then((res) => {
     article.value = res.data;
     document.title = article.value.article_title;
     wordNum.value = deleteHTMLTag(article.value.article_content).length;
@@ -242,7 +242,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .article-container {
   border-radius: 0.5rem;

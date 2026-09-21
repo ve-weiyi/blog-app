@@ -3,7 +3,7 @@ import App from "./App.vue";
 import { setupDirectives } from "./directives";
 import { setupAssets, setupLazy, setupMasonry, setupMdPreview, setupViewer } from "./plugins";
 import { setupRouter } from "./router";
-import { setupStore } from "./store";
+import { setupStore } from "./stores";
 
 async function setupApp() {
   setupAssets();

@@ -15,7 +15,6 @@ dist-ssr
 
 # 包管理器
 stats.html
-pnpm-lock.yaml
 package-lock.json
 yarn.lock
 

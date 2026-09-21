@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "@/store";
+import { useAppStore } from "@/stores";
 import { useDark, useScroll, useToggle } from "@vueuse/core";
 
 const appStore = useAppStore();

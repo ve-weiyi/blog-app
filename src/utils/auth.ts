@@ -9,7 +9,9 @@ export const APP_NAME = "blog-web";
 export const STORAGE_KEYS = {
   UID: `${APP_NAME}:auth:uid`,
   TOKEN: `${APP_NAME}:auth:token`,
-  TERMINAL_ID: `${APP_NAME}:auth:terminal_id`,
+  DEVICE_ID: `${APP_NAME}:auth:device_id`,
+  REFRESH_TOKEN: `${APP_NAME}:auth:refresh_token`,
+  REFRESH_EXPIRES_AT: `${APP_NAME}:auth:refresh_expires_at`,
 } as const;
 
 /**
@@ -22,15 +24,31 @@ export const AuthStorage = {
   getToken() {
     return localStorage.getItem(STORAGE_KEYS.TOKEN);
   },
-  setTokens(uid: string, token: string) {
+  getAccessToken() {
+    return this.getToken();
+  },
+  getRefreshToken() {
+    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+  },
+  getRefreshExpiresAt(): number {
+    const v = localStorage.getItem(STORAGE_KEYS.REFRESH_EXPIRES_AT);
+    return v ? Number(v) : 0;
+  },
+  setTokens(uid: string, accessToken: string, refreshToken?: string, refreshExpiresAt?: number) {
     localStorage.setItem(STORAGE_KEYS.UID, uid);
-    localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    }
+    if (refreshExpiresAt) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_EXPIRES_AT, String(refreshExpiresAt));
+    }
   },
-  getTerminalId() {
-    return localStorage.getItem(STORAGE_KEYS.TERMINAL_ID);
+  getDeviceId() {
+    return localStorage.getItem(STORAGE_KEYS.DEVICE_ID);
   },
-  setTerminalId(tid: string) {
-    localStorage.setItem(STORAGE_KEYS.TERMINAL_ID, tid);
+  setDeviceId(did: string) {
+    localStorage.setItem(STORAGE_KEYS.DEVICE_ID, did);
   },
   clearAuth() {
     localStorage.clear();

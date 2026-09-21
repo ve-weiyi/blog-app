@@ -39,10 +39,10 @@
 </template>
 
 <script setup lang="ts">
-import { ArticleAPI } from "@/api/article";
-import { useAppStore } from "@/store";
+import { ArticleAPI } from "@/api";
+import { useAppStore } from "@/stores";
 import { debouncedWatch } from "@vueuse/core";
-import type { ArticleHome, QueryArticleHomeReq } from "@/api/types";
+import type { ArticleHome, QueryArticleListReq } from "@/api";
 
 const appStore = useAppStore();
 const dialogVisible = defineModel<boolean>();
@@ -52,11 +52,11 @@ debouncedWatch(keyword, () => (keyword.value ? handleSearch() : (articleList.val
   debounce: 300,
 });
 const handleSearch = () => {
-  const data: QueryArticleHomeReq = {
+  const data: QueryArticleListReq = {
     article_title: keyword.value,
   };
 
-  ArticleAPI.findArticleHomeListApi(data).then((res) => {
+  ArticleAPI.queryArticleList(data).then((res) => {
     articleList.value = res.data.list;
   });
 };

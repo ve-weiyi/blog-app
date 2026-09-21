@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { AlbumAPI } from "@/api/album";
-import type { Album, Photo } from "@/api/types";
-import { useBlogStore } from "@/store";
+import { AlbumAPI, PhotoAPI } from "@/api";
+import type { Album, Photo } from "@/api";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
@@ -36,11 +36,11 @@ const photoList = ref<Photo[]>([]);
 onMounted(() => {
   const albumId = Number(route.params.albumId);
 
-  AlbumAPI.getAlbumApi({ id: albumId }).then((res) => {
+  AlbumAPI.getAlbum({ id: albumId }).then((res) => {
     albumInfo.value = res.data;
   });
 
-  AlbumAPI.findPhotoListApi({ album_id: albumId }).then((res) => {
+  PhotoAPI.queryAlbumPhotoList({ album_id: albumId }).then((res) => {
     photoList.value = res.data.list;
   });
 });

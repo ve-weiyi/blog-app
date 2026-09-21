@@ -24,9 +24,9 @@
 </template>
 
 <script setup lang="ts">
-import { TagAPI } from "@/api/tag";
-import type { Tag } from "@/api/types";
-import { useBlogStore } from "@/store";
+import { TagAPI } from "@/api";
+import type { Tag } from "@/api";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 const cover = blogStore.getCover("tag");
@@ -47,7 +47,7 @@ const getRandomColor = () => {
 };
 const tagList = ref<Tag[]>([]);
 onMounted(() => {
-  TagAPI.findTagListApi().then((res) => {
+  TagAPI.queryTagList().then((res) => {
     tagList.value = res.data.list;
   });
 });

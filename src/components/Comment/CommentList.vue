@@ -43,9 +43,15 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { CommentAPI } from "@/api/comment";
-import type { Comment, CommentReply, NewCommentReq, QueryCommentReq } from "@/api/types";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
+import { CommentAPI } from "@/api";
+import type {
+  Comment,
+  CommentReply,
+  CreateCommentReq,
+  QueryCommentListReq,
+  QueryCommentReplyListReq,
+} from "@/api";
 import { replaceEmoji } from "@/utils/emojis";
 import CommentItem from "./CommentItem.vue";
 
@@ -130,7 +136,7 @@ const handleInsertComment = async () => {
     return;
   }
 
-  const comment: NewCommentReq = {
+  const comment: CreateCommentReq = {
     topic_id: getTopicId(),
     reply_user_id: "",
     parent_id: 0,
@@ -140,7 +146,7 @@ const handleInsertComment = async () => {
 
   try {
     loading.value = true;
-    await CommentAPI.addCommentApi(comment);
+    await CommentAPI.createComment(comment);
 
     const isReview = blogStore.blogInfo.website_config.website_feature.is_comment_review;
     showMessage("success", getReviewMessage(isReview));
@@ -183,7 +189,7 @@ const handleConfirmReply = async (
     return;
   }
 
-  const newComment: NewCommentReq = {
+  const newComment: CreateCommentReq = {
     topic_id: [1, 3].includes(props.commentType) ? getTopicId() : 0,
     parent_id: comment.parent_id || comment.id,
     reply_user_id: replyTarget.value?.user_id || "",
@@ -193,7 +199,7 @@ const handleConfirmReply = async (
 
   try {
     loading.value = true;
-    await CommentAPI.addCommentApi(newComment);
+    await CommentAPI.createComment(newComment);
 
     replyCommentIndex.value = -1;
     replyTarget.value = null;
@@ -218,7 +224,7 @@ const handleLikeComment = async (comment: Comment | CommentReply) => {
   if (!checkLogin()) return;
 
   try {
-    await CommentAPI.likeCommentApi({ id: comment.id });
+    await CommentAPI.likeComment({ id: comment.id });
 
     const isLiked = userStore.isCommentLike(comment.id);
     if (isLiked) {
@@ -236,17 +242,17 @@ const handleLikeComment = async (comment: Comment | CommentReply) => {
 };
 
 const handleReadMoreComment = async (index: number, comment: Comment) => {
-  const queryData: QueryCommentReq = {
+  const queryData: QueryCommentReplyListReq = {
+    comment_id: comment.id,
     page: 1,
     page_size: 5,
     topic_id: getTopicId(),
-    parent_id: comment.id,
     type: props.commentType,
     sorts: ["created_at desc"],
   };
 
   try {
-    const res = await CommentAPI.findCommentReplyListApi(queryData);
+    const res = await CommentAPI.queryCommentReplyList(queryData);
     comment.comment_reply_list = res.data.list;
 
     // 如果回复数量大于5条，显示分页
@@ -262,17 +268,17 @@ const handleReadMoreComment = async (index: number, comment: Comment) => {
 };
 
 const handleChangeReplyCurrent = async (index: number, comment: Comment, page: number) => {
-  const queryData: QueryCommentReq = {
+  const queryData: QueryCommentReplyListReq = {
+    comment_id: comment.id,
     page,
     page_size: 5,
     topic_id: getTopicId(),
-    parent_id: comment.id,
     type: props.commentType,
     sorts: ["created_at desc"],
   };
 
   try {
-    const res = await CommentAPI.findCommentReplyListApi(queryData);
+    const res = await CommentAPI.queryCommentReplyList(queryData);
     comment.comment_reply_list = res.data.list;
   } catch (error: any) {
     showMessage("error", error.message);
@@ -290,7 +296,7 @@ const changeReplyCurrent = (index: number, comment: Comment, current: number) =>
 
 // 加载评论
 const loadComments = async () => {
-  const queryData: QueryCommentReq = {
+  const queryData: QueryCommentListReq = {
     page: queryParams.current,
     page_size: queryParams.page_size,
     topic_id: getTopicId(),
@@ -301,7 +307,7 @@ const loadComments = async () => {
 
   try {
     loading.value = true;
-    const res = await CommentAPI.findCommentListApi(queryData);
+    const res = await CommentAPI.queryCommentList(queryData);
 
     if (queryParams.current === 1) {
       commentList.value = res.data.list;
@@ -328,14 +334,14 @@ const loadMoreComments = () => {
 // 生命周期
 onMounted(async () => {
   if (userStore.isLogin()) {
-    await userStore.getUserLike();
+    await userStore.getMeLike();
   }
   await loadComments();
 });
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .reply-title {
   display: flex;

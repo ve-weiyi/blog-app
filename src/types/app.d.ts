@@ -11,17 +11,13 @@ declare namespace App {
     /** The backend service response data */
     type Response<T = unknown> = {
       /**
-       * 返回状态
+       * 业务错误标识
        */
-      flag: boolean;
-      /**
-       * 状态码
-       */
-      code: number;
+      code: string;
       /**
        * 返回信息
        */
-      msg: string;
+      message: string;
       /**
        * 返回数据
        */

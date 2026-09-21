@@ -10,7 +10,7 @@
     <div class="login-title">忘记密码</div>
     <n-input v-model:value="forgetForm.email" class="mt-11" placeholder="邮箱号"></n-input>
     <n-input-group class="mt-11">
-      <n-input v-model:value="forgetForm.verify_code" placeholder="验证码" />
+      <n-input v-model:value="forgetForm.code" placeholder="验证码" />
       <n-button color="#49b1f5" :disabled="flag" @click="sendCode">
         {{ timer == 0 ? "发送" : `${timer}s` }}
       </n-button>
@@ -21,6 +21,13 @@
       type="password"
       show-password-on="click"
       placeholder="密码"
+    ></n-input>
+    <n-input
+      v-model:value="confirmPassword"
+      class="mt-11"
+      type="password"
+      show-password-on="click"
+      placeholder="确认密码"
     ></n-input>
     <n-button
       class="mt-11"
@@ -39,10 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "@/store";
+import { useAppStore } from "@/stores";
 import { useIntervalFn } from "@vueuse/core";
-import { AuthAPI } from "@/api/auth";
-import type { ResetPasswordReq } from "@/api/types";
+import { AuthAPI } from "@/api";
+import type { ResetPasswordReq } from "@/api";
 
 const appStore = useAppStore();
 const data = reactive({
@@ -53,9 +60,10 @@ const data = reactive({
     email: "",
     password: "",
     confirm_password: "",
-    verify_code: "",
+    code: "",
   } as ResetPasswordReq,
 });
+const confirmPassword = ref("");
 const { timer, flag, loading, forgetForm } = toRefs(data);
 const { pause, resume } = useIntervalFn(
   () => {
@@ -82,7 +90,7 @@ const sendCode = () => {
     return;
   }
   start(60);
-  AuthAPI.sendEmailVerifyCodeApi({
+  AuthAPI.sendEmailCode({
     email: forgetForm.value.email,
     type: "reset_password",
   }).then((res) => {
@@ -90,7 +98,7 @@ const sendCode = () => {
   });
 };
 const handleForget = () => {
-  if (forgetForm.value.verify_code.trim().length != 6) {
+  if (forgetForm.value.code.trim().length != 6) {
     window.$message?.warning("请输入6位验证码");
     return;
   }
@@ -98,14 +106,19 @@ const handleForget = () => {
     window.$message?.warning("密码不能少于6位");
     return;
   }
+  if (confirmPassword.value !== forgetForm.value.password) {
+    window.$message?.warning("两次密码输入不一致");
+    return;
+  }
   loading.value = true;
-  AuthAPI.resetPasswordApi(forgetForm.value).then((res) => {
+  forgetForm.value.confirm_password = confirmPassword.value;
+  AuthAPI.resetPassword(forgetForm.value).then((res) => {
     window.$message?.success("修改成功");
     forgetForm.value = {
       email: "",
       password: "",
       confirm_password: "",
-      verify_code: "",
+      code: "",
     };
     appStore.setForgetFlag(false);
 

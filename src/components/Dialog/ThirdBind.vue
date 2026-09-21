@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { AuthAPI } from "@/api/auth";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
+import { AuthAPI } from "@/api";
 
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -47,7 +47,7 @@ const handleBindAccount = (platform: string) => {
 
   // 这里添加绑定逻辑
   const state = route.query.redirect as string;
-  AuthAPI.getOauthAuthorizeUrlApi({
+  AuthAPI.getOauthAuthorizeUrl({
     platform: platform,
     state: "bind_account",
   })

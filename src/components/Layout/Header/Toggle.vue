@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "@/store";
+import { useAppStore } from "@/stores";
 
 const appStore = useAppStore();
 
@@ -17,7 +17,7 @@ const drawerVisible = computed(() => (value: boolean) => (value ? "toggle close"
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .toggle {
   display: none;

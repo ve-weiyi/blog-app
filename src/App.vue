@@ -4,7 +4,9 @@
       <Header></Header>
       <main class="main-wrapper">
         <router-view v-slot="{ Component, route }">
-          <keep-alive>
+          <!-- max 是必需的：:key 用 route.path，每访问一个不同参数值就各占一个实例，
+               无上限时实例（及其 DOM 与已取数据）随浏览单调增长 -->
+          <keep-alive :max="8">
             <component :is="Component" :key="route.path" />
           </keep-alive>
         </router-view>
@@ -24,8 +26,8 @@
       <Player v-if="blogStore.blogInfo.website_config.website_feature.is_music_player === 1" />
       <!-- 聊天室 -->
       <ChatRoom v-if="blogStore.blogInfo.website_config.website_feature.is_chat_room === 1" />
-      <!-- AI助手 -->
-      <AiAssistant v-if="blogStore.blogInfo.website_config.website_feature.is_ai_assistant === 1" />
+      <!-- AI助手（暂时屏蔽） -->
+      <!-- <AiAssistant v-if="blogStore.blogInfo.website_config.website_feature.is_ai_assistant === 1" /> -->
     </div>
   </Provider>
 </template>
@@ -43,9 +45,9 @@ import ThirdBind from "@/components/Dialog/ThirdBind.vue";
 import PhoneBind from "@/components/Dialog/PhoneBind.vue";
 import Tool from "@/components/Tool/index.vue";
 import ChatRoom from "@/components/ChatRoom/index.vue";
-import AiAssistant from "@/components/AiAssistant/index.vue";
+// import AiAssistant from "@/components/AiAssistant/index.vue";
 
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 
 const blogStore = useBlogStore();
 const userStore = useUserStore();
@@ -64,17 +66,18 @@ onBeforeMount(async () => {
 });
 
 onMounted(() => {
-  blogStore.blogInfo.notice_list?.forEach((notice) => {
-    const level = notice.level.toLowerCase();
-    if (level === "info" || level === "success" || level === "warning" || level === "error") {
-      window.$notification[level]({
-        title: () => h("div", { innerHTML: notice.title }),
-        content: () => h("div", { innerHTML: notice.content }),
-        duration: 5000,
-        keepAliveOnHover: true,
-      });
-    }
-  });
+  // 通知弹窗（暂时屏蔽）
+  // blogStore.blogInfo.notice_list?.forEach((notice) => {
+  //   const level = notice.level.toLowerCase();
+  //   if (level === "info" || level === "success" || level === "warning" || level === "error") {
+  //     window.$notification[level]({
+  //       title: () => h("div", { innerHTML: notice.title }),
+  //       content: () => h("div", { innerHTML: notice.content }),
+  //       duration: 5000,
+  //       keepAliveOnHover: true,
+  //     });
+  //   }
+  // });
 
   console.log(
     "%c Hello World %c By 与梦 %c",
