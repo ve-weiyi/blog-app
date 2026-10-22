@@ -46,10 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ArticleHome } from "@/api/types";
-import { ArticleAPI } from "@/api/article";
+import type { ArticleHome, QueryArticleListReq } from "@/api";
+import { ArticleAPI } from "@/api";
 import { formatDate } from "@/utils/date";
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
@@ -71,25 +71,25 @@ const categoryId = route.params.categoryId as string;
 const title = ref("");
 
 function getTagArticleList() {
-  let data = {
+  const data: QueryArticleListReq = {
     page: queryParams.value.page,
     page_size: queryParams.value.page_size,
-    classify_name: tagId,
+    tag_name: tagId,
   };
 
-  ArticleAPI.findArticleClassifyTagApi(data).then((res) => {
+  ArticleAPI.queryArticleList(data).then((res) => {
     articleList.value = res.data.list;
   });
 }
 
 function getCategoryArticleList() {
-  let data = {
+  const data: QueryArticleListReq = {
     page: queryParams.value.page,
     page_size: queryParams.value.page_size,
-    classify_name: categoryId,
+    category_name: categoryId,
   };
 
-  ArticleAPI.findArticleClassifyCategoryApi(data).then((res) => {
+  ArticleAPI.queryArticleList(data).then((res) => {
     articleList.value = res.data.list;
   });
 }

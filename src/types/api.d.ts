@@ -1,11 +1,13 @@
 /** 所有 api 接口的响应数据都应该准守该格式 */
-interface IApiResponse<T> {
-  flag: boolean;
-  code: number;
+interface IApiResponse<T = any> {
+  code: string;
   data: T;
-  msg: string;
+  message: string;
   trace_id: string;
 }
+
+/** API 响应结构（全局可用） */
+type ApiResponse<T = any> = IApiResponse<T>;
 
 interface PageResult<T> {
   list: T;

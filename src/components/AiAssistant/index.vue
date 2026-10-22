@@ -168,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore, useUserStore } from "@/store";
+import { useBlogStore, useUserStore } from "@/stores";
 import { formatDateTime } from "@/utils/date";
 import ai from "@/assets/icons/ai.svg";
 import promptsData from "@/components/AiAssistant/prompts-zh.json";

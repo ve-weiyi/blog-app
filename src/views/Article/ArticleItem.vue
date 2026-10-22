@@ -62,8 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArticleAPI } from "@/api/article";
-import type { ArticleHome, QueryArticleHomeReq } from "@/api/types";
+import { ArticleAPI } from "@/api";
+import type { ArticleHome, QueryArticleListReq } from "@/api";
 
 import { formatDate } from "@/utils/date";
 
@@ -72,21 +72,21 @@ const data = reactive({
   queryParams: {
     page: 1,
     page_size: 5,
-  } as QueryArticleHomeReq,
+  } as QueryArticleListReq,
   articleList: [] as ArticleHome[],
 });
 const { count, queryParams, articleList } = toRefs(data);
 watch(
   () => queryParams.value.page,
   () => {
-    ArticleAPI.findArticleHomeListApi(queryParams.value).then((res) => {
+    ArticleAPI.queryArticleList(queryParams.value).then((res) => {
       articleList.value = res.data.list;
       count.value = res.data.total;
     });
   }
 );
 onMounted(() => {
-  ArticleAPI.findArticleHomeListApi(queryParams.value).then((res) => {
+  ArticleAPI.queryArticleList(queryParams.value).then((res) => {
     articleList.value = res.data.list;
     count.value = res.data.total;
   });

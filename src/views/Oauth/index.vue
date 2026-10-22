@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/store";
-import { UserAPI } from "@/api/user.ts";
+import { useUserStore } from "@/stores";
+import { MeAPI } from "@/api";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -19,15 +19,19 @@ const route = useRoute();
 onMounted(() => {
   let platform = route.params.platform as string;
   let code = route.query.code as string;
-  let state = route.query.state as string;
+  // state 是服务端签发的一次性 nonce；跳转意图由本地保存
+  const state = (route.query.state as string) || "";
+  const intent = sessionStorage.getItem("oauth_intent") || "";
+  sessionStorage.removeItem("oauth_intent");
 
   console.log("route", platform, code, state);
 
-  switch (state) {
+  switch (intent) {
     case "bind_account":
-      UserAPI.updateUserBindThirdPartyApi({
+      MeAPI.bindMeThirdParty({
         platform: platform,
         code: code,
+        state: state,
       })
         .then((res) => {
           window.$message?.success("绑定成功");
@@ -49,6 +53,7 @@ onMounted(() => {
         .thirdLogin({
           platform: platform,
           code: code,
+          state: state,
         })
         .then((res) => {
           window.$message?.success("登录成功");
@@ -60,7 +65,7 @@ onMounted(() => {
           });
 
           // 跳转回原页面
-          const loginUrl = state;
+          const loginUrl = intent;
           if (loginUrl != null && loginUrl != "") {
             router.push(loginUrl);
           } else {

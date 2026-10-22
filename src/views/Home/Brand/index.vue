@@ -87,7 +87,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .brand-container {
   @include flex;

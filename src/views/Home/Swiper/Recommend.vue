@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArticleAPI } from "@/api/article";
-import type { ArticlePreview } from "@/api/types";
+import { ArticleAPI } from "@/api";
+import type { ArticlePreview } from "@/api";
 import { formatDate } from "@/utils/date";
 import { Autoplay, Mousewheel, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -34,14 +34,14 @@ const modules = [Pagination, Navigation, Mousewheel, Autoplay];
 const articleList = ref<ArticlePreview[]>([]);
 const articleCover = computed(() => (cover: string) => "background:url(" + cover + ")");
 onMounted(() => {
-  ArticleAPI.findArticleRecommendApi().then((res) => {
+  ArticleAPI.queryRecommendArticleList().then((res) => {
     articleList.value = res.data.list;
   });
 });
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .swiper-container {
   height: 13.875rem;

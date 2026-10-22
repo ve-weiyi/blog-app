@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore } from "@/store";
+import { useAppStore, useBlogStore } from "@/stores";
 import ArticleItem from "@/views/Article/ArticleItem.vue";
 import Brand from "./Brand/index.vue";
 import Images from "./Swiper/Images.vue";

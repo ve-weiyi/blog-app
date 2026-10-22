@@ -34,7 +34,7 @@
             alt=""
           />
           <span class="ml"
-            >{{ danmu.user_info?.nickname || getTouristName(danmu.terminal_id) }} :</span
+            >{{ danmu.user_info?.nickname || getTouristName(danmu.device_id) }} :</span
           >
           <span class="ml">{{ danmu.message_content }}</span>
         </span>
@@ -44,9 +44,9 @@
 </template>
 
 <script setup lang="ts">
-import { MessageAPI } from "@/api/message";
-import type { Message, NewMessageReq } from "@/api/types";
-import { useBlogStore, useUserStore } from "@/store";
+import { MessageAPI } from "@/api";
+import type { Message, CreateMessageReq } from "@/api";
+import { useBlogStore, useUserStore } from "@/stores";
 import vueDanmaku from "vue3-danmaku";
 import { AuthStorage } from "@/utils/auth.ts";
 
@@ -71,7 +71,7 @@ const show = ref(false);
 const danmaku = ref();
 const messageList = ref<Message[]>([]);
 onMounted(async () => {
-  MessageAPI.findMessageListApi().then((res) => {
+  MessageAPI.queryMessageList().then((res) => {
     messageList.value = res.data.list;
   });
 });
@@ -80,16 +80,16 @@ const AddMessage = () => {
     window.$message?.warning("留言内容不能为空");
     return;
   }
-  const message: NewMessageReq = {
+  const message: CreateMessageReq = {
     message_content: addMessageContent.value,
     // time: Math.floor(Math.random() * (10 - 7)) + 7,
   };
-  MessageAPI.addMessageApi(message).then((res) => {
+  MessageAPI.createMessage(message).then((res) => {
     if (blogStore.blogInfo.website_config.website_feature.is_message_review) {
       window.$message?.warning("留言成功，正在审核中");
     } else {
       danmaku.value.push({
-        terminal_id: AuthStorage.getTerminalId(),
+        device_id: AuthStorage.getDeviceId(),
         user_info: userStore.userInfo,
         ...message,
       });
@@ -101,8 +101,8 @@ const AddMessage = () => {
 
 const touristAvatar = ref(blogStore.blogInfo.website_config.tourist_avatar);
 
-const getTouristName = (terminal: string) => {
-  return "游客" + terminal.substring(0, 8);
+const getTouristName = (device: string) => {
+  return "游客" + device.substring(0, 8);
 };
 </script>
 

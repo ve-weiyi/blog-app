@@ -31,12 +31,12 @@
 </template>
 
 <script setup lang="ts">
-import { ArticleAPI } from "@/api/article";
-import type { ArticlePreview, QueryArticleArchivesReq } from "@/api/types";
+import { ArticleAPI } from "@/api";
+import type { ArticlePreview, QueryArchivedArticleListReq } from "@/api";
 import Pagination from "@/components/Pagination/index.vue";
 
 import { formatDate } from "@/utils/date";
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
@@ -46,21 +46,21 @@ const data = reactive({
   queryParams: {
     page: 1,
     page_size: 5,
-  } as QueryArticleArchivesReq,
+  } as QueryArchivedArticleListReq,
   archivesList: [] as ArticlePreview[],
 });
 const { count, queryParams, archivesList } = toRefs(data);
 watch(
   () => queryParams.value.page,
   () => {
-    ArticleAPI.findArticleArchivesApi(queryParams.value).then((res) => {
+    ArticleAPI.queryArchivedArticleList(queryParams.value).then((res) => {
       archivesList.value = res.data.list;
       count.value = res.data.total;
     });
   }
 );
 onMounted(() => {
-  ArticleAPI.findArticleArchivesApi(queryParams.value).then((res) => {
+  ArticleAPI.queryArchivedArticleList(queryParams.value).then((res) => {
     archivesList.value = res.data.list;
     count.value = res.data.total;
   });

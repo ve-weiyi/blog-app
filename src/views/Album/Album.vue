@@ -21,16 +21,16 @@
 </template>
 
 <script setup lang="ts">
-import { AlbumAPI } from "@/api/album";
-import type { Album } from "@/api/types";
-import { useBlogStore } from "@/store";
+import { AlbumAPI } from "@/api";
+import type { Album } from "@/api";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
 const cover = blogStore.getCover("album");
 const albumList = ref<Album[]>([]);
 onMounted(() => {
-  AlbumAPI.findAlbumListApi().then((res) => {
+  AlbumAPI.queryAlbumList().then((res) => {
     albumList.value = res.data.list;
   });
 });

@@ -1,187 +1,198 @@
-<div align=center>
-  <img alt="vue3-element-admin" width="64" height="64" src="./public/favicon.ico">
+<div align="center">
+  <img alt="blog-app" width="64" height="64" src="./public/favicon.ico">
+  <h1>blog-app</h1>
+  <p>🎨 基于 Vue 3 + Naive UI 的现代化博客前台</p>
 
-  <h1>ve-blog-naive</h1>
-
-  <img src="https://img.shields.io/badge/Vue-3.5.13-brightgreen.svg"/>
-  <img src="https://img.shields.io/badge/TypeScript-5.8.2-blue.svg"/>
-  <img src="https://img.shields.io/badge/Vite-6.2.6-green.svg"/>
-  <img src="https://img.shields.io/badge/Pinia-3.0.1-yellow.svg"/>
-  <img src="https://img.shields.io/badge/UnoCSS-65.4.3-red.svg"/>
-  <img src="https://img.shields.io/badge/Naive UI-2.41.0-blue.svg"/>
-
+  <img src="https://img.shields.io/badge/Vue-3.5-brightgreen?logo=vuedotjs" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript" />
+  <img src="https://img.shields.io/badge/Vite-6.4-purple?logo=vite" />
+  <img src="https://img.shields.io/badge/Pinia-3.0-yellow?logo=vuedotjs" />
+  <img src="https://img.shields.io/badge/Naive_UI-2.43-blue?logo=naiveui" />
+  <img src="https://img.shields.io/badge/UnoCSS-66.5-red" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
 </div>
 
 ![](https://foruda.gitee.com/1708618984641188532/a7cca095_716974.png "rainbow.png")
 
 
 <div align="center">
-  <a target="_blank" href="https://blog.veweiyi.cn">🖥️ 在线预览</a> |
-  <a target="_blank" href="https://blog.veweiyi.cn/blog-api/v1/swagger/index.html">📑 接口文档</a>
+
+  <a target="_blank" href="https://app.veweiyi.cn">
+    <img src="https://img.shields.io/badge/🖥️_在线预览-博客前台-3498db?style=for-the-badge" />
+  </a>
+  <br/>
+  <a target="_blank" href="https://app.veweiyi.cn/api/v1/swagger/index.html">📑 接口文档</a>
 </div>
+
+<br/>
 
 ## 📚 项目简介
 
-ve-blog-naive 是一个现代化的的现代化博客系统，基于 Vue 3.5 + TypeScript + Naive UI 构建。项目采用最新的前端技术栈，提供了丰富的功能组件和优雅的用户界面。
+blog-app 是 blog 博客系统的前台展示项目，基于 Vue 3 + TypeScript + Naive UI 构建。提供文章浏览、社交互动、实时聊天、相册、音乐播放等丰富的用户端功能，支持响应式布局和深色/浅色主题切换。
 
-## ✨ 项目预览
+### ✨ 核心亮点
 
-![](assets/img.jpg)
-
-![](assets/img_1.jpg)
-
-![](assets/img_2.jpg)
-
-📲 **移动端**
-
-|                |                |                |
-|----------------|----------------|----------------|
-| ![](assets/img_6.jpg) | ![](assets/img_7.jpg) | ![](assets/img_8.jpg) |
-
-
-## ⚡ 核心特性
-
-- 🚀 **高性能前端架构**
-  - 基于 Vue 3 + TypeScript + Vite 4 构建
-  - 采用组合式 API 开发，代码更清晰易维护
-  - 支持按需加载，极致的首屏加载速度
-
-- 🎨 **优雅的用户界面**
-  - 集成 Naive UI 组件库，提供专业级 UI 组件
-  - 精心设计的响应式布局，完美适配各种设备
-  - 支持深色/浅色主题切换，保护用户眼睛
-
-- 📝 **强大的内容管理**
-  - 支持 Markdown 编辑器，轻松编写文章
-  - 智能的图片管理系统，支持相册功能
-  - 文章分类和标签管理，内容组织更清晰
-
-- 🔍 **智能搜索系统**
-  - 全文搜索功能，快速定位内容
-  - 支持文章归档，按时间轴浏览
-  - 智能分类管理，内容检索更便捷
+- 🎨 **开箱即用的视觉体验** — Naive UI 组件库 + 精心调教的响应式布局，PC / 平板 / 手机完美适配
+- 🌓 **智能主题切换** — 深色 / 浅色一键切换，跟随系统偏好，保护眼睛
+- ⚡ **极速首屏** — Vite 6 + UnoCSS 原子化 CSS + 按需加载，首屏秒开
+- 💬 **社交功能完备** — WebSocket 实时聊天、留言弹幕、说说动态、音乐播放器，不止是博客
+- 🔌 **即插即用的组件体系** — 20+ 通用组件，组件化程度高，二次开发只需关注页面
+- 🛠️ **零配置上手** — `pnpm dev` 一行命令启动，Mock 数据内置，前端可独立开发调试
 
 ## 🛠️ 技术栈
 
-- 核心框架：Vue 3.5.13
-- UI 组件：Naive UI 2.42.0
-- 构建工具：Vite 6.2.6
-- 编程语言：TypeScript 5.8.2
-- 状态管理：Pinia 3.0.1
-- CSS 解决方案：UnoCSS 65.4.3
-- HTTP 工具：Axios 1.8.2
-- 工具库：lodash-es、dayjs
-- 图表：ECharts 5.6.0
+| 技术 | 说明 | 版本 |
+|------|------|------|
+| Vue 3 | 渐进式框架 | 3.5 |
+| TypeScript | 类型安全 | 5.9 |
+| Vite | 构建工具 | 6.4 |
+| Naive UI | UI 组件库 | 2.43 |
+| Pinia | 状态管理 | 3.0 |
+| UnoCSS | 原子化 CSS | 66.5 |
+| Vue Router | 路由管理 | 4.6 |
+| Axios | HTTP 请求 | 1.13 |
+| ECharts | 数据可视化 | 5.6 |
+| StompJS | WebSocket 客户端 | 7.2 |
+
+## 🎯 页面功能
+
+| 页面 | 功能 | 状态 |
+|------|------|:--:|
+| 🏠 首页 | 文章列表、轮播 Banner、站点统计 | ✅ |
+| ✍️ 文章 | Markdown 渲染、目录导航、代码高亮、评论点赞 | ✅ |
+| 📂 分类/标签 | 分类统计、标签云、关联文章 | ✅ |
+| 📅 归档 | 时间轴浏览、按年月聚合 | ✅ |
+| 💬 说说 | 动态发布、点赞互动、弹幕墙 | ✅ |
+| 🖼️ 相册 | 相册列表、照片浏览、懒加载 | ✅ |
+| 👥 友链 | 友情链接展示、访问统计 | ✅ |
+| 🎵 音乐 | 在线音乐播放器 | ✅ |
+| 💬 聊天室 | WebSocket + Stomp 实时聊天 | ✅ |
+| 🔐 登录 | OAuth2.0（GitHub / QQ / 微信）| ✅ |
+| 🤖 AI 助手 | AI 对话组件 | ✅ |
+| 🌓 主题 | 深色/浅色切换、跟随系统 | ✅ |
 
 ## 📁 项目源码
 
-| 项目               | 功能     | Github                                                               |                                                                     |
-|------------------|--------|----------------------------------------------------------------------|---------------------------------------------------------------------|
-| ve-blog-golang   | 博客后端服务 | [ve-blog-golang](https://github.com/ve-weiyi/ve-blog-golang.git)     | [ve-blog-golang](https://gitee.com/ve-weiyi/ve-blog-golang.git)     |
-| ve-blog-naive    | 博客前台展示 | [ve-blog-naive](https://github.com/ve-weiyi/ve-blog-naive.git)       | [ve-blog-naive](https://gitee.com/ve-weiyi/ve-blog-naive.git)       |
-| ve-admin-element | 博客后台管理 | [ve-admin-element](https://github.com/ve-weiyi/ve-admin-element.git) | [ve-admin-element](https://gitee.com/ve-weiyi/ve-admin-element.git) |
+| 项目 | 说明 | 仓库 |
+|------|------|------|
+| blog-cloud | 博客后端（go-zero 微服务版） | [GitHub](https://github.com/ve-weiyi/blog-cloud) |
+| blog-gin | 博客后端（Gin 单体版） | [GitHub](https://github.com/ve-weiyi/blog-gin) |
+| blog-app | 博客前台 | [GitHub](https://github.com/ve-weiyi/blog-app) |
+| blog-admin | 博客后台 | [GitHub](https://github.com/ve-weiyi/blog-admin) |
 
 ## 🏗️ 项目结构
 
 ```
-ve-blog-naive
-├── .github/            # GitHub 工作流配置
-├── public/             # 静态资源
-├── src/                # 源代码
-│   ├── api/           # API 接口
-│   ├── assets/        # 项目资源
-│   ├── components/    # 公共组件
-│   ├── directives/    # 自定义指令
-│   ├── plugins/       # 插件配置
-│   ├── router/        # 路由配置
-│   ├── store/         # 状态管理
-│   ├── types/         # 类型定义
-│   ├── utils/         # 工具函数
-│   ├── views/         # 页面组件
-│   ├── App.vue        # 根组件
-│   ├── main.ts        # 入口文件
-│   └── permission.ts  # 权限控制
-├── .env               # 环境变量配置
-├── .env.dev           # 开发环境配置
-├── .env.prod          # 生产环境配置
-├── .env.test          # 测试环境配置
-├── .eslintrc.js       # ESLint 配置
-├── .prettierrc.js     # Prettier 配置
-├── docker-compose.yaml # Docker 编排配置
-├── Dockerfile         # Docker 构建配置
-├── index.html         # HTML 模板
-├── nginx.conf         # Nginx 配置
-├── package.json       # 项目依赖
-├── tsconfig.json      # TypeScript 配置
-├── uno.config.ts      # UnoCSS 配置
-└── vite.config.ts     # Vite 配置
+blog-app/
+├── src/
+│   ├── api/              # API 接口定义（由 goctlx 从 .api 生成）
+│   ├── assets/           # 静态资源
+│   ├── components/       # 20+ 通用组件
+│   │   ├── AiAssistant/  # AI 助手
+│   │   ├── Catalog/      # 文章目录
+│   │   ├── ChatRoom/     # 聊天室
+│   │   ├── MusicPlayer/  # 音乐播放器
+│   │   └── ...
+│   ├── directives/       # 自定义指令
+│   ├── enums/            # 枚举
+│   ├── plugins/          # 插件配置
+│   ├── router/           # 路由配置
+│   ├── stores/           # Pinia 状态管理
+│   ├── styles/           # 全局样式
+│   ├── types/            # TypeScript 类型定义
+│   ├── utils/            # 工具函数
+│   ├── views/            # 页面组件（按功能模块分目录）
+│   └── permission.ts     # 路由守卫
+├── mock/                 # Mock 数据，文件名与 src/api 分组一一对应
+├── public/               # 公共静态资源
+└── vite.config.ts        # Vite 配置
 ```
+
+## ⚙️ 环境要求
+
+- **Node.js**: >= 18.19.100
+- **pnpm**: >= 8.15.1
 
 ## 🚀 快速开始
 
-### 环境要求
-
-- Node.js >= 20
-- pnpm >= 9
-
-### 开发环境
-
 ```bash
-# 克隆项目
-git clone https://github.com/ve-weiyi/ve-blog-naive.git
-
-# 进入项目目录
-cd ve-blog-naive
-
-# 安装依赖
+# 1. 克隆 & 安装
+git clone https://github.com/ve-weiyi/blog-app.git && cd blog-app
 pnpm install
 
-# 启动开发服务器
-pnpm dev
+# 2. 启动开发服务器
+pnpm dev                     # → http://localhost:9520
 ```
 
-### 生产环境
+三种模式按接口来源区分：
+
+| 命令 | 接口来源 | 需要后端 | 用途 |
+|------|---------|:-------:|------|
+| `pnpm dev` | mock | 否 | 纯前端开发 |
+| `pnpm test` | 本地后端 `:9420` | 是 | 前后端联调 |
+| `pnpm preview` | 构建产物 + mock | 否 | 预览打包结果 |
+
+> `pnpm preview` 的 mock 由 `vite preview` 的服务端中间件承接，只在本地生效；
+> 构建产物直接托管到 nginx 不会带 mock。
+
+## 🐳 Docker 部署
 
 ```bash
-# 构建生产版本
-pnpm build
+# 在 monorepo 根目录执行
+docker build -f deploy/docker/frontend/Dockerfile \
+  --build-arg DIST_DIR=dist/blog \
+  --build-arg PROXY_PASS=app.veweiyi.cn \
+  -t blog-app-web:latest ./blog-app
+docker run -d --name blog-app-web --restart always -p 9520:80 blog-app-web:latest
+
+# 或使用 Docker Compose
+docker compose -f deploy/docker/docker-compose.yml up -d app-web
 ```
 
-### Docker部署
+## 📈 开发路线
 
-```bash
-docker run -d \
---name ve-blog-naive \
---restart always \
--p 9420:80 \
-ghcr.io/ve-weiyi/ve-blog-naive:latest
-```
+### 已完成 ✅
+- [x] 文章浏览（列表 / 详情 / 目录导航 / 代码高亮）
+- [x] 评论 + 点赞系统
+- [x] 分类 / 标签 / 归档 / 搜索
+- [x] 相册浏览 + 图片懒加载
+- [x] 说说动态 + 弹幕墙
+- [x] 友链展示
+- [x] WebSocket 实时聊天室（Stomp）
+- [x] OAuth2.0 多端登录
+- [x] AI 助手组件
+- [x] 音乐播放器
+- [x] 深色 / 浅色主题切换
+- [x] 响应式布局（PC / 平板 / 手机）
 
-## 📋 开发计划
-
-### ✅ 已完成功能
-
-- [x] 相册页面
-- [x] 相册详情页面
-- [x] 基础博客功能
-- [x] 响应式布局
-- [x] 主题切换
-
-### 🚧 开发中功能
-
-- [ ] 相册详情页面照片获取优化
-- [ ] 归档页面时间轴重构
-- [ ] 性能优化
+### 进行中 🚧
+- [ ] 相册详情页性能优化
+- [ ] 归档页时间轴重构
 - [ ] SEO 优化
 
-## 🤝 贡献指南
+### 计划中 📋
+- [ ] PWA 离线支持
+- [ ] 单元测试 + E2E 测试
+- [ ] 国际化（i18n）
 
-欢迎提交 Issue 和 Pull Request 来帮助改进项目。在提交代码前，请确保：
+## 🤝 参与贡献
 
-1. 代码符合项目的编码规范
-2. 添加必要的测试用例
-3. 更新相关文档
+1. Fork 本仓库
+2. 创建分支：`git checkout -b feature/your-feature`
+3. 提交：`git commit -m 'feat: 添加某功能'`
+4. 推送：`git push origin feature/your-feature`
+5. 提交 Pull Request
+
+提交规范遵循 [Conventional Commits](https://www.conventionalcommits.org/)：
+`feat:` / `fix:` / `docs:` / `refactor:` / `style:` / `test:` / `chore:`
 
 ## 📄 开源协议
 
-本项目采用 MIT 协议开源，详情请查看 [LICENSE](LICENSE) 文件。
+MIT License — 可自由使用、修改和分发。
+
+---
+
+<div align="center">
+  <p>如果这个项目对你有帮助，请给个 ⭐ Star 支持一下！</p>
+  <p>Made with ❤️ by <a href="https://github.com/ve-weiyi">ve-weiyi</a></p>
+</div>

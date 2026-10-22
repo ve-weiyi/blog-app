@@ -21,20 +21,20 @@
 <script setup lang="ts">
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
-import { TalkAPI } from "@/api/talk";
-import type { Talk } from "@/api/types";
+import { TalkAPI } from "@/api";
+import type { Talk } from "@/api";
 // 自动播放
 const modules = [Autoplay];
 const talkList = ref<Talk[]>([]);
 onMounted(() => {
-  TalkAPI.findTalkListApi().then((res) => {
+  TalkAPI.queryTalkList().then((res) => {
     talkList.value = res.data.list;
   });
 });
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .talk-swiper {
   @include flex;

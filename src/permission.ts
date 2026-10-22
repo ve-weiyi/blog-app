@@ -1,7 +1,7 @@
 import { router } from "@/router";
-import { useUserStore } from "@/store";
+import { useUserStore } from "@/stores";
 import NProgress from "nprogress";
-import { AuthAPI } from "@/api/auth.ts";
+import { GuestAPI } from "@/api";
 import { AuthStorage } from "@/utils/auth.ts";
 
 NProgress.configure({
@@ -12,48 +12,81 @@ NProgress.configure({
   minimum: 0.3,
 });
 
-// 获取客户端信息
-const getClientInfo = async (): Promise<void> => {
+// 获取游客信息
+const getGuestInfo = async (): Promise<boolean> => {
   try {
-    const res = await AuthAPI.getClientInfoApi();
-    AuthStorage.setTerminalId(res.data.terminal_id);
+    const res = await GuestAPI.getGuest();
+    AuthStorage.setDeviceId(res.data.device_id);
+    return true;
   } catch {
-    window.$message?.warning("获取客户端信息失败");
+    window.$message?.warning("获取游客信息失败");
+    return false;
   }
 };
 
-router.beforeEach(async (to, from, next) => {
-  if (!AuthStorage.getTerminalId()) {
-    await getClientInfo();
+const GUEST_BOOTSTRAP_KEY = "blog-web:guest:bootstrapped";
+
+const hasBootstrapped = (): boolean => {
+  try {
+    return sessionStorage.getItem(GUEST_BOOTSTRAP_KEY) === "1";
+  } catch {
+    return false;
   }
-  next();
+};
+
+const markBootstrapped = (): void => {
+  try {
+    sessionStorage.setItem(GUEST_BOOTSTRAP_KEY, "1");
+  } catch {
+    // sessionStorage 不可用时按未引导处理
+  }
+};
+
+// vue-router 5 起守卫不再接收 next()，改为返回布尔值放行
+router.beforeEach(async () => {
+  const stored = AuthStorage.getDeviceId();
+  if (stored) {
+    if (!hasBootstrapped()) {
+      // 已有本地标识：后台补一次，确保 Cookie 与服务端属性同步，不阻塞导航
+      void getGuestInfo().then((ok) => {
+        if (ok) markBootstrapped();
+      });
+    }
+    return true;
+  }
+
+  // 首次访问或本地标识丢失：必须等到签发完成再继续
+  if (await getGuestInfo()) {
+    markBootstrapped();
+  }
+  return true;
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   NProgress.start();
   if (to.meta.title) {
     document.title = to.meta.title as string;
   }
-  if (AuthStorage.getToken()) {
-    const userStore = useUserStore();
-    if (userStore.userInfo.user_id === undefined) {
-      userStore
-        .getUserInfo()
-        .then((res) => {
-          next();
-        })
-        .catch(() => {
-          userStore.logout().then(() => {
-            window.$message?.warning("凭证失效，请重新登录");
-            next();
-          });
-        });
-    } else {
-      next();
-    }
-  } else {
-    next();
+  if (!AuthStorage.getToken()) {
+    return true;
   }
+  const userStore = useUserStore();
+  // user_id 为空串表示尚未拉取过用户信息（初始值即空串，见 stores/modules/user.ts）
+  if (userStore.userInfo.user_id) {
+    return true;
+  }
+  try {
+    await userStore.getUserInfo();
+  } catch {
+    // 退出请求自身也会带着失效凭证失败，不能让它中断本次导航
+    try {
+      await userStore.logout();
+    } catch {
+      await userStore.forceLogOut();
+    }
+    window.$message?.warning("凭证失效，请重新登录");
+  }
+  return true;
 });
 router.afterEach(() => {
   NProgress.done();

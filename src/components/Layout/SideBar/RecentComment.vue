@@ -24,18 +24,18 @@
 </template>
 
 <script setup lang="ts">
-import { CommentAPI } from "@/api/comment";
+import { CommentAPI } from "@/api";
 import { formatDate } from "@/utils/date";
-import type { Comment, QueryCommentReq } from "@/api/types";
+import type { Comment, QueryCommentListReq } from "@/api";
 
 const commentList = ref<Comment[]>([]);
 onMounted(() => {
-  const data: QueryCommentReq = {
+  const data: QueryCommentListReq = {
     page: 1,
     page_size: 5,
   };
 
-  CommentAPI.findCommentRecentListApi(data).then((res) => {
+  CommentAPI.queryRecentCommentList(data).then((res) => {
     commentList.value = res.data.list;
   });
 });

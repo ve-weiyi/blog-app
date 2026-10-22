@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 import { useWindowSize } from "@vueuse/core";
 
 const route = useRoute();

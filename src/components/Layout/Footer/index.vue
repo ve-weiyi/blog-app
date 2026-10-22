@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 import { formatDate } from "@/utils/date";
 
 const route = useRoute();

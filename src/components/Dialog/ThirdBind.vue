@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
-import { AuthAPI } from "@/api/auth";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
+import { AuthAPI } from "@/api";
 
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -47,15 +47,16 @@ const handleBindAccount = (platform: string) => {
 
   // 这里添加绑定逻辑
   const state = route.query.redirect as string;
-  AuthAPI.getOauthAuthorizeUrlApi({
+  AuthAPI.getOauthAuthorizeUrl({
     platform: platform,
     state: "bind_account",
   })
     .then((res) => {
       if (res.data?.authorize_url) {
         appStore.setThirdBindFlag(false);
-        // 跳转到授权页面
+        // 跳转到授权页面；state 由服务端签发，绑定意图存本地
         let url = res.data.authorize_url;
+        sessionStorage.setItem("oauth_intent", "bind_account");
         console.log("第三方登录平台:", platform, state, url);
         window.open(url, "_self");
       } else {

@@ -58,11 +58,11 @@
 </template>
 
 <script lang="ts" setup>
-import { TalkAPI } from "@/api/talk";
-import type { QueryTagReq, Talk } from "@/api/types";
+import { TalkAPI } from "@/api";
+import type { QueryTalkListReq, Talk } from "@/api";
 
 import { formatDateTime } from "@/utils/date";
-import { useBlogStore } from "@/store";
+import { useBlogStore } from "@/stores";
 
 const blogStore = useBlogStore();
 
@@ -72,12 +72,12 @@ const data = reactive({
   queryParams: {
     page: 1,
     page_size: 5,
-  } as QueryTagReq,
+  } as QueryTalkListReq,
   talkList: [] as Talk[],
 });
 const { count, queryParams, talkList } = toRefs(data);
 const getList = () => {
-  TalkAPI.findTalkListApi(queryParams.value).then((res) => {
+  TalkAPI.queryTalkList(queryParams.value).then((res) => {
     if (queryParams.value.page == 1) {
       talkList.value = res.data.list;
     } else {

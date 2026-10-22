@@ -51,9 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { TalkAPI } from "@/api/talk";
-import type { Talk } from "@/api/types";
-import { useAppStore, useBlogStore, useUserStore } from "@/store";
+import { TalkAPI } from "@/api";
+import type { Talk } from "@/api";
+import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 import { formatDateTime } from "@/utils/date";
 
 const userStore = useUserStore();
@@ -78,7 +78,7 @@ const like = () => {
     return;
   }
   let id = talk.value.id;
-  TalkAPI.likeTalkApi({ id }).then((res) => {
+  TalkAPI.likeTalk({ id: id }).then((res) => {
     //判断是否点赞
     if (userStore.isTalkLike(id)) {
       window.$message?.error("取消点赞成功");
@@ -91,14 +91,14 @@ const like = () => {
   });
 };
 onMounted(() => {
-  TalkAPI.getTalkApi({ id: Number(route.params.id) }).then((res) => {
+  TalkAPI.getTalk({ id: Number(route.params.id) }).then((res) => {
     talk.value = res.data;
   });
 });
 </script>
 
 <style lang="scss" scoped>
-@use "@/assets/styles/mixin.scss" as *;
+@use "@/styles/mixin.scss" as *;
 
 .talk-item {
   display: flex;

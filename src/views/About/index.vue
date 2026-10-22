@@ -18,8 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import { useBlogStore } from "@/store";
-import { WebsiteAPI } from "@/api/website";
+import { useBlogStore } from "@/stores";
+import { ConfigAPI } from "@/api";
 
 const blogStore = useBlogStore();
 
@@ -27,7 +27,7 @@ const cover = blogStore.getCover("about");
 const aboutContent = ref("");
 
 const getAboutContent = () => {
-  WebsiteAPI.getAboutMeApi().then((res) => {
+  ConfigAPI.getAboutMe().then((res) => {
     aboutContent.value = res.data.content;
   });
 };

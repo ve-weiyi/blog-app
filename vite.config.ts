@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import type { UserConfig } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import path from "node:path";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
@@ -17,6 +17,7 @@ import { FileSystemIconLoader } from "unplugin-icons/loaders";
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
 import { createHtmlPlugin } from "vite-plugin-html";
 import { prismjsPlugin } from "vite-plugin-prismjs";
+import { mockDevServerPlugin } from "vite-plugin-mock-dev-server";
 import VueDevtools from "vite-plugin-vue-devtools";
 import progress from "vite-plugin-progress";
 import compression from "vite-plugin-compression";
@@ -91,7 +92,7 @@ export default defineConfig((configEnv): UserConfig => {
           rewrite: (path) => path.replace("", ""),
         },
         // 本地开发环境通过代理实现跨域，生产环境使用 nginx 转发
-        "/blog-api": {
+        "/api": {
           target: env.VITE_APP_API_URL, // 代理后的地址 =target/path
           ws: true,
           /** 是否允许跨域 */
@@ -104,6 +105,14 @@ export default defineConfig((configEnv): UserConfig => {
           },
         },
       },
+    },
+
+    /**
+     * 预览服务，端口与 dev 保持一致，便于统一 stop
+     * @see https://cn.vitejs.dev/config/#preview-options
+     */
+    preview: {
+      port: Number(env.VITE_APP_PORT),
     },
 
     /** 预定义常量 */
@@ -164,8 +173,12 @@ export default defineConfig((configEnv): UserConfig => {
            * 1. 注意这些包名必须存在，否则打包会报错
            * 2. 如果你不想自定义 chunk 分割策略，可以直接移除这段配置
            */
-          manualChunks: {
-            vue: ["vue", "vue-router", "pinia"],
+          // Vite 8（Rollup 5）只保留函数写法，对象写法已移除
+          manualChunks(id) {
+            if (/(^|[\\/])node_modules[\\/](vue|vue-router|pinia)([\\/]|$)/.test(id)) {
+              return "vue";
+            }
+            return undefined;
           },
         },
       },
@@ -191,6 +204,12 @@ export default defineConfig((configEnv): UserConfig => {
     esbuild: false,
 
     plugins: [
+      /**
+       * 开发态 mock 服务，按 VITE_MOCK_DEV_SERVER 开关
+       */
+      ...(env.VITE_MOCK_DEV_SERVER === "true"
+        ? [mockDevServerPlugin({ prefix: [env.VITE_APP_BASE_API] })]
+        : []),
       /**
        * 支持 `.vue` 文件的解析
        */
@@ -324,9 +343,8 @@ export default defineConfig((configEnv): UserConfig => {
       // CSS 预处理器
       preprocessorOptions: {
         // 定义全局 SCSS 变量
-        scss: {
-          api: "modern-compiler",
-        },
+        // sass 的 api 选项在 Vite 8 已移除（只保留 modern API），无需再声明
+        scss: {},
       },
     },
   };

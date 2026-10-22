@@ -35,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/store";
+import { useUserStore } from "@/stores";
 import type { UploadCustomRequestOptions } from "naive-ui";
 import { VueCropper } from "vue-cropper";
 import "vue-cropper/dist/index.css";
-import { UploadAPI } from "@/api/upload_file.ts";
+import { UploadAPI } from "@/api";
 
 // 父组件向子组件传输的数据
 const props = defineProps({
@@ -95,7 +95,7 @@ function confirm() {
       file_path: "/avatar",
       file: file,
     };
-    UploadAPI.uploadFileApi(data).then((res) => {
+    UploadAPI.uploadFile(data).then((res) => {
       console.log("res", res);
       emit("onConfirm", res.data);
     });
