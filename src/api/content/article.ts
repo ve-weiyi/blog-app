@@ -1,9 +1,9 @@
 import request from "@/utils/request";
 import type {
   ArticleDetails,
-  EmptyResp,
   GetArticleReq,
   LikeArticleReq,
+  LikeResult,
   ListResult,
   QueryArchivedArticleListReq,
   QueryArticleListReq,
@@ -49,11 +49,18 @@ export const ArticleAPI = {
   },
 
   /** 点赞文章 */
-  likeArticle(params: LikeArticleReq): Promise<ApiResponse<EmptyResp>> {
+  likeArticle(params: LikeArticleReq): Promise<ApiResponse<LikeResult>> {
     return request({
       url: `/api/v1/articles/${params.id}/like`,
       method: "POST",
-      params: params,
+    });
+  },
+
+  /** 取消点赞文章 */
+  unlikeArticle(params: LikeArticleReq): Promise<ApiResponse<LikeResult>> {
+    return request({
+      url: `/api/v1/articles/${params.id}/like`,
+      method: "DELETE",
     });
   },
 };

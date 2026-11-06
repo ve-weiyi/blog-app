@@ -1,5 +1,13 @@
 export * from "./types";
 
+export { AiAPI, streamAiChat } from "./ai";
+export type {
+  AiChatMessage,
+  AiCitation,
+  AiQuotaResp,
+  AiSessionVO,
+  AiStreamEvent,
+} from "./ai";
 export { AuthAPI } from "./account/auth";
 export { GuestAPI } from "./account/guest";
 export { MeAPI } from "./account/me";
@@ -14,6 +22,7 @@ export { MessageAPI } from "./discussion/message";
 export { TalkAPI } from "./discussion/talk";
 export { AlbumAPI } from "./media/album";
 export { PhotoAPI } from "./media/photo";
+export { NotificationAPI } from "./notification";
 export { ConfigAPI } from "./site/config";
 export { FriendAPI } from "./site/friend";
 export { HomeAPI } from "./site/home";

@@ -23,7 +23,7 @@
             class="like"
             icon-class="like"
             size="0.8rem"
-            :class="likeClass(comment.id)"
+            :class="comment.liked ? 'like-flag' : ''"
             style="margin-right: 5px"
           />
           <span v-show="comment.like_count">{{ comment.like_count }}</span>
@@ -61,7 +61,7 @@
               class="like"
               icon-class="like"
               size="0.8rem"
-              :class="likeClass(reply.id)"
+              :class="reply.liked ? 'like-flag' : ''"
               style="margin-right: 5px"
             />
             <span v-show="reply.like_count > 0">{{ reply.like_count }}</span>
@@ -109,7 +109,6 @@
 
 <script setup lang="ts">
 import { formatDateTime } from "@/utils/date";
-import { useUserStore } from "@/stores";
 import type { Comment } from "@/api";
 
 interface Props {
@@ -132,12 +131,10 @@ const emit = defineEmits<{
   changePage: [index: number, comment: Comment, page: number];
 }>();
 
-const userStore = useUserStore();
 
 // 计算属性
 const isAdmin = (userId?: string) => userId === "1";
 
-const likeClass = (id: number) => (userStore.isCommentLike(id) ? "like-flag" : "");
 
 const showViewMore = computed(
   () =>

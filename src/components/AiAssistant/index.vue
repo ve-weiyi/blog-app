@@ -1,404 +1,339 @@
 <template>
   <div class="ai-room">
-    <div v-show="show" class="ai-container" :class="{ fullscreen: isFullscreen }">
+    <div v-show="show" class="ai-container">
       <div class="ai-header">
-        <div class="header-content">
-          <div class="ai-title">
-            <div class="title-icon">
-              <img :src="ai" alt="AI助手" width="20" height="20" />
-            </div>
-            <span class="title-text">AI助手</span>
+        <div class="ai-title">
+          <div class="title-icon">
+            <img :src="ai" alt="" width="18" height="18" />
           </div>
-          <div class="status-info">
-            <div class="status-indicator"></div>
-            <span class="status-text">在线</span>
-          </div>
+          <span class="title-text">博客助手</span>
+          <span v-if="quotaLabel" class="quota-pill">{{ quotaLabel }}</span>
         </div>
         <div class="header-actions">
-          <button class="close-btn" @click="clearChat" title="清除记录">
+          <button class="icon-btn" title="清空对话" aria-label="清空对话" @click="handleClear">
             <svg-icon icon-class="delete" size="1rem" />
           </button>
-          <button
-            class="close-btn"
-            @click="toggleFullscreen"
-            :title="isFullscreen ? '退出全屏' : '全屏显示'"
-          >
-            <svg-icon :icon-class="isFullscreen ? 'compress' : 'expand'" size="1rem" />
-          </button>
-          <button class="close-btn" @click="show = false" title="关闭">
-            <svg-icon icon-class="close" size="1.2rem" />
+          <button class="icon-btn" title="关闭" aria-label="关闭" @click="show = false">
+            <svg-icon icon-class="close" size="1rem" />
           </button>
         </div>
       </div>
 
-      <div v-if="showRolePanel" class="role-panel">
-        <div class="role-header">
-          <h4>选择角色</h4>
-          <button class="close-role-btn" @click="showRolePanel = false">×</button>
-        </div>
-        <div class="role-list">
-          <div v-for="role in roles" :key="role.id" class="role-item" @click="selectRole(role)">
-            <div class="role-avatar">{{ role.emoji }}</div>
-            <div class="role-info">
-              <div class="role-name">{{ role.name }}</div>
-              <div class="role-desc">{{ role.description }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="ai-content" class="ai-content">
-        <div v-if="messages.length === 0" class="welcome-message">
+      <div ref="contentRef" class="ai-content" @scroll="handleScroll">
+        <div v-if="messages.length === 0" class="welcome">
           <div class="welcome-icon">
-            <img :src="ai" alt="AI助手" width="48" height="48" />
+            <img :src="ai" alt="" width="44" height="44" />
           </div>
-          <h3>你好！我是博客AI助手</h3>
-          <p>我可以帮助您解答问题、提供建议和进行对话</p>
+          <h3>你好，我是博客助手</h3>
+          <p>我会根据站内文章回答你的问题；找不到的内容会直接告诉你。</p>
 
-          <div class="quick-actions">
-            <div class="action-title">快速开始：</div>
-            <div class="action-buttons">
-              <button @click="sendQuickMessage('请你介绍一下这个博客项目')" class="quick-btn">
-                📝 博客介绍
-              </button>
-              <button @click="sendQuickMessage('有什么技术问题可以咨询？')" class="quick-btn">
-                💻 技术咨询
-              </button>
-              <button @click="sendQuickMessage('推荐一些博客项目学习资源')" class="quick-btn">
-                📚 学习资源
-              </button>
-              <button @click="sendQuickMessage('如何联系博主？')" class="quick-btn">
-                📞 联系方式
-              </button>
-            </div>
-          </div>
-
-          <div class="features">
-            <div class="feature-item">
-              <span class="feature-icon">🤖</span>
-              <span>智能对话</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">⚡</span>
-              <span>快速响应</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">🎯</span>
-              <span>精准回答</span>
-            </div>
-          </div>
-        </div>
-        <div
-          v-for="(message, index) in messages"
-          :key="index"
-          class="ai-item"
-          :class="{ 'my-ai': message.isUser }"
-        >
-          <div class="message-wrapper">
-            <div class="avatar-wrapper">
-              <img v-if="message.isUser" :src="userAvatar" :alt="'用户'" class="user-avatar" />
-              <div v-else class="ai-avatar">
-                {{ currentRole?.emoji || "🤖" }}
-              </div>
-            </div>
-
-            <div class="message-content">
-              <div class="message-header">
-                <span class="username" :class="{ 'my-username': message.isUser }">
-                  {{ message.isUser ? "我" : "AI助手" }}
-                </span>
-                <span class="timestamp">
-                  {{ formatDateTime(message.timestamp) }}
-                </span>
-              </div>
-
-              <div class="message-bubble" :class="{ 'my-message': message.isUser }">
-                <div v-if="message.isLoading" class="loading-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div v-else v-html="message.content" class="message-text"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="ai-footer">
-        <div class="quick-input-bar">
-          <div class="quick-input-items">
-            <button @click="toggleRolePanel" class="quick-input-btn">🎭 切换角色</button>
-            <button @click="sendQuickMessage('你好')" class="quick-input-btn">👋 你好</button>
-            <button @click="sendQuickMessage('帮助')" class="quick-input-btn">❓ 帮助</button>
-            <button @click="sendQuickMessage('技术问题')" class="quick-input-btn">💻 技术</button>
-            <button @click="sendQuickMessage('联系方式')" class="quick-input-btn">📞 联系</button>
-          </div>
-        </div>
-        <div class="input-wrapper">
-          <textarea
-            v-model="inputContent"
-            class="ai-input"
-            placeholder="请输入您的问题..."
-            @keydown="handleKeyCode($event)"
-            :disabled="isLoading"
-            rows="1"
-          ></textarea>
-          <div class="input-actions">
+          <div class="quick-questions">
             <button
-              class="send-btn"
-              :disabled="!inputContent.trim() || isLoading"
-              @click="handleSend"
+              v-for="question in quickQuestions"
+              :key="question"
+              type="button"
+              class="quick-btn"
+              @click="askQuick(question)"
             >
-              <svg-icon v-if="isLoading" icon-class="loading" size="1rem" class="loading-icon" />
-              <svg-icon v-else icon-class="plane" size="1rem" />
+              {{ question }}
             </button>
           </div>
         </div>
+
+        <div
+          v-for="message in messages"
+          :key="message.id"
+          class="ai-item"
+          :class="{ 'is-user': message.role === 'user' }"
+        >
+          <div class="avatar-wrapper">
+            <img
+              v-if="message.role === 'user' && userAvatar && !avatarFailed"
+              :src="userAvatar"
+              alt="我"
+              class="avatar"
+              @error="avatarFailed = true"
+            />
+            <span v-else-if="message.role === 'user'" class="avatar avatar--fallback">我</span>
+            <div v-else class="ai-avatar">
+              <img :src="ai" alt="助手" width="20" height="20" />
+            </div>
+          </div>
+
+          <div class="message-body">
+            <div
+              class="message-bubble"
+              :class="{
+                'user-bubble': message.role === 'user',
+                pending: message.pending,
+                failed: message.failed,
+              }"
+            >
+              <div v-if="message.activity" class="activity">{{ message.activity }}</div>
+              <div v-else-if="message.pending && !message.content" class="loading-dots">
+                <span></span><span></span><span></span>
+              </div>
+
+              <div
+                v-if="message.role === 'user' && message.content"
+                class="message-text plain-text"
+              >
+                {{ message.content }}
+              </div>
+              <div
+                v-else-if="message.content"
+                class="message-text markdown-body"
+                v-html="renderedContent(message)"
+              ></div>
+            </div>
+
+            <div v-if="message.citations?.length" class="citations">
+              <a
+                v-for="citation in message.citations"
+                :key="citation.article_id"
+                class="citation"
+                :href="citation.url"
+                :title="citation.summary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg-icon icon-class="article" size="0.9rem" />
+                <span>{{ citation.title }}</span>
+              </a>
+            </div>
+
+            <button v-if="message.failed" type="button" class="retry-btn" @click="retry">
+              重试
+            </button>
+          </div>
+        </div>
+
+        <button v-if="hasNewBelow" type="button" class="new-message-btn" @click="scrollToBottom(true)">
+          ↓ 新消息
+        </button>
+      </div>
+
+      <div class="ai-footer">
+        <div class="input-wrapper">
+          <textarea
+            ref="inputRef"
+            v-model="inputContent"
+            class="ai-input"
+            placeholder="问问站内的文章…"
+            aria-label="输入问题"
+            maxlength="1000"
+            rows="1"
+            @input="resizeInput"
+            @keydown="handleKeyCode"
+          ></textarea>
+          <button
+            v-if="streaming"
+            type="button"
+            class="stop-btn"
+            aria-label="停止生成"
+            @click="stop"
+          >
+            <span class="stop-square"></span>
+          </button>
+          <button
+            v-else
+            type="button"
+            class="send-btn"
+            aria-label="发送问题"
+            :disabled="!canSend"
+            @click="handleSend"
+          >
+            <svg-icon icon-class="plane" size="1rem" />
+          </button>
+        </div>
+        <p v-if="errorText" class="error-hint">{{ errorText }}</p>
+        <p class="composer-hint">Enter 发送 · Shift + Enter 换行</p>
       </div>
     </div>
 
-    <div class="ai-toggle" @click="handleOpen">
+    <div
+      class="ai-toggle"
+      role="button"
+      tabindex="0"
+      aria-label="打开博客助手"
+      @click="handleOpen"
+      @keydown.enter="handleOpen"
+      @keydown.space.prevent="handleOpen"
+    >
       <div v-if="unreadCount > 0" class="unread-badge">
         {{ unreadCount > 99 ? "99+" : unreadCount }}
       </div>
       <div class="toggle-icon">
-        <img :src="ai" alt="AI助手" width="36" height="36" />
+        <img :src="ai" alt="博客助手" width="36" height="36" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useBlogStore, useUserStore } from "@/stores";
-import { formatDateTime } from "@/utils/date";
 import ai from "@/assets/icons/ai.svg";
-import promptsData from "@/components/AiAssistant/prompts-zh.json";
-
-// 消息接口定义
-interface Message {
-  content: string;
-  isUser: boolean;
-  timestamp: number;
-  isLoading?: boolean;
-}
+import { renderMarkdown } from "./markdown";
+import { useAiChat } from "./useAiChat";
 
 const userStore = useUserStore();
 const blogStore = useBlogStore();
 
 const show = ref(false);
-const messages = ref<Message[]>([]);
-const inputContent = ref("");
-const isLoading = ref(false);
 const unreadCount = ref(0);
-const isFullscreen = ref(false);
-const showRolePanel = ref(false);
-const currentRole = ref(null);
+const inputContent = ref("");
+const contentRef = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLTextAreaElement | null>(null);
+const stickToBottom = ref(true);
+const hasNewBelow = ref(false);
+
+const {
+  messages,
+  streaming,
+  quotaLabel,
+  errorText,
+  send,
+  stop,
+  retry,
+  clear,
+  refreshQuota,
+} = useAiChat();
 
 const userAvatar = computed(
   () => userStore.userInfo.avatar || blogStore.blogInfo.website_config.tourist_avatar
 );
+const avatarFailed = ref(false);
+watch(userAvatar, () => {
+  avatarFailed.value = false;
+});
+const canSend = computed(() => !streaming.value && inputContent.value.trim().length > 0);
 
-// 角色列表
-const roles = promptsData.map((item, index) => ({
-  id: index + 1,
-  name: item.act,
-  emoji: item.emoji,
-  description: item.act,
-  prompt: item.prompt,
-}));
+const quickQuestions = [
+  "这个博客主要写什么？",
+  "最近更新了哪些文章？",
+  "介绍一下博主",
+];
 
-// 打开AI助手面板
-const handleOpen = () => {
-  unreadCount.value = 0;
+const MAX_INPUT_HEIGHT = 96;
+
+// 已渲染的 Markdown 按消息缓存：流式更新时只重算当前消息，历史消息不重复渲染
+const markdownCache = new Map<number, { content: string; html: string }>();
+
+function renderedContent(message: { id: number; content: string }): string {
+  const cached = markdownCache.get(message.id);
+  if (cached && cached.content === message.content) {
+    return cached.html;
+  }
+  const html = renderMarkdown(message.content);
+  markdownCache.set(message.id, { content: message.content, html });
+  return html;
+}
+
+function handleOpen() {
   show.value = !show.value;
-};
-
-// 切换角色面板
-const toggleRolePanel = () => {
-  showRolePanel.value = !showRolePanel.value;
-};
-
-// 选择角色
-const selectRole = async (role) => {
-  currentRole.value = role;
-  showRolePanel.value = false;
-  messages.value = [];
-
-  // 发送角色prompt给AI
-  const aiMessage = {
-    content: "",
-    isUser: false,
-    timestamp: Date.now(),
-    isLoading: true,
-  };
-  messages.value.push(aiMessage);
-  const aiMessageIndex = messages.value.length - 1;
-
-  isLoading.value = true;
-
-  try {
-    await getAIResponseStream(role.prompt, (chunk) => {
-      messages.value[aiMessageIndex].content += chunk;
-      messages.value[aiMessageIndex].isLoading = false;
-    });
-  } catch (error) {
-    console.error("角色初始化失败:", error);
-    messages.value[aiMessageIndex].content = "角色初始化失败，请重试。";
-    messages.value[aiMessageIndex].isLoading = false;
-  } finally {
-    isLoading.value = false;
+  unreadCount.value = 0;
+  if (show.value) {
+    void refreshQuota();
+    stickToBottom.value = true;
+    void scrollToBottom(true);
+    void nextTick(() => inputRef.value?.focus());
   }
-};
+}
 
-// 切换全屏显示
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value;
-};
+function handleClear() {
+  clear();
+  markdownCache.clear();
+}
 
-// 清空聊天记录
-const clearChat = () => {
-  messages.value = [];
-  currentRole.value = null;
-};
+function askQuick(question: string) {
+  inputContent.value = question;
+  void handleSend();
+}
 
-// 快速消息发送
-const sendQuickMessage = (message: string) => {
-  inputContent.value = message;
-  handleSend();
-};
-
-// 调用OpenAI API (Stream)
-const getAIResponseStream = async (
-  userMessage: string,
-  onChunk: (chunk: string) => void
-): Promise<void> => {
-  try {
-    const response = await fetch(import.meta.env.VITE_APP_AI_API_URL + "/chat/completions", {
-      method: "POST",
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        stream: true,
-        messages: [
-          {
-            role: "system",
-            content: currentRole.value ? currentRole.value.prompt : roles[0].prompt,
-          },
-          ...messages.value
-            .filter((m) => !m.isLoading)
-            .map((m) => ({
-              role: m.isUser ? "user" : "assistant",
-              content: m.content,
-            })),
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status}`);
-    }
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const { done, value } = await reader!.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split("\n");
-
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          if (data === "[DONE]") return;
-
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices[0]?.delta?.content;
-            if (content) {
-              onChunk(content);
-            }
-          } catch (e) {
-            // 忽略解析错误
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error("OpenAI API调用失败:", error);
-    onChunk("抱歉，服务暂时不可用，请稍后再试。");
+function handleSend() {
+  if (!canSend.value) {
+    return;
   }
-};
-
-// 发送消息
-const handleSend = async () => {
-  if (!inputContent.value.trim() || isLoading.value) return;
-
-  const userMessage = inputContent.value.trim();
+  send(inputContent.value);
   inputContent.value = "";
-
-  // 添加用户消息
-  messages.value.push({
-    content: userMessage,
-    isUser: true,
-    timestamp: Date.now(),
+  void nextTick(() => {
+    resizeInput();
+    void scrollToBottom(true);
   });
+}
 
-  // 添加AI回复消息（初始为空）
-  const aiMessage: Message = {
-    content: "",
-    isUser: false,
-    timestamp: Date.now(),
-    isLoading: true,
-  };
-  messages.value.push(aiMessage);
-  const aiMessageIndex = messages.value.length - 1;
-
-  isLoading.value = true;
-
-  try {
-    await getAIResponseStream(userMessage, (chunk: string) => {
-      // 更新AI消息内容
-      messages.value[aiMessageIndex].content += chunk;
-      messages.value[aiMessageIndex].isLoading = false;
-    });
-
-    if (!show.value) {
-      unreadCount.value++;
-    }
-  } catch (error) {
-    console.error("AI回复失败:", error);
-    messages.value[aiMessageIndex].content = "抱歉，我现在无法回复您的消息，请稍后再试。";
-    messages.value[aiMessageIndex].isLoading = false;
-  } finally {
-    isLoading.value = false;
+function handleKeyCode(event: KeyboardEvent) {
+  // Ctrl/Shift+Enter 与输入法组词的 Enter 都留给换行
+  if (event.key !== "Enter" || event.ctrlKey || event.shiftKey || event.isComposing) {
+    return;
   }
-};
+  event.preventDefault();
+  handleSend();
+}
 
-// 输入事件处理
-const handleKeyCode = (e: KeyboardEvent) => {
-  if (e.ctrlKey && e.key === "Enter") {
-    inputContent.value += "\n";
-  } else if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    handleSend();
+function resizeInput() {
+  const element = inputRef.value;
+  if (!element) {
+    return;
   }
-};
+  element.style.height = "auto";
+  element.style.height = `${Math.min(element.scrollHeight, MAX_INPUT_HEIGHT)}px`;
+}
 
-// 自动滚动到底部
+function isNearBottom() {
+  const element = contentRef.value;
+  if (!element) {
+    return true;
+  }
+  return element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+}
+
+function handleScroll() {
+  stickToBottom.value = isNearBottom();
+  if (stickToBottom.value) {
+    hasNewBelow.value = false;
+  }
+}
+
+async function scrollToBottom(force = false) {
+  await nextTick();
+  const element = contentRef.value;
+  if (!element) {
+    return;
+  }
+  element.scrollTop = element.scrollHeight;
+  if (force) {
+    stickToBottom.value = true;
+    hasNewBelow.value = false;
+  }
+}
+
+// 内容增长时跟随到底部；用户上翻时提示有新内容
 watch(
-  messages,
-  () => {
-    nextTick(() => {
-      const element = document.getElementById("ai-content");
-      if (element) {
-        element.scrollTop = element.scrollHeight;
-      }
-    });
-  },
-  { deep: true }
+  () => messages.value.reduce((total, message) => total + message.content.length, 0),
+  async () => {
+    if (!show.value) {
+      return;
+    }
+    if (stickToBottom.value) {
+      await scrollToBottom();
+    } else {
+      hasNewBelow.value = true;
+    }
+  }
 );
+
+// 流结束时若面板收起，计一次未读
+watch(streaming, (value, previous) => {
+  if (previous && !value && !show.value) {
+    unreadCount.value++;
+  }
+});
+
+onBeforeUnmount(() => {
+  stop();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -407,27 +342,24 @@ watch(
 }
 
 .ai-container {
-  backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  overflow: hidden;
-  animation: slideInUp 0.3s ease-out;
   z-index: 1200;
-
-  @media (prefers-color-scheme: dark) {
-    background: rgba(30, 30, 30, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--grey-0) 96%, transparent);
+  border: 1px solid var(--grey-2);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px var(--grey-9-a1),
+    0 0 0 1px var(--grey-2);
+  backdrop-filter: blur(20px);
+  animation: slideInUp 0.3s ease-out;
 }
 
 @keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -438,22 +370,10 @@ watch(
 @media (min-width: 760px) {
   .ai-container {
     position: fixed;
-    bottom: 166px;
     right: 20px;
+    bottom: 164px;
     width: 400px;
-    height: 600px;
-    max-height: calc(100vh - 186px);
-
-    &.fullscreen {
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      width: 100vw;
-      height: 100vh;
-      max-height: 100vh;
-      border-radius: 0;
-    }
+    height: min(600px, calc(100vh - 190px));
   }
 }
 
@@ -461,616 +381,506 @@ watch(
   .ai-container {
     position: fixed;
     top: 0;
-    bottom: 0;
     right: 0;
     left: 0;
+    height: 100vh;
+    height: 100dvh;
+    border: none;
     border-radius: 0;
   }
 }
 
 .ai-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  color: white;
+  gap: 12px;
+  padding: 12px 14px 12px 16px;
+  color: #fff;
+  background: linear-gradient(120deg, var(--color-pink) 0%, var(--primary-color) 100%);
+}
 
-  .header-content {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+.ai-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
 
-  .ai-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 16px;
-
-    .title-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-    }
-  }
-
-  .status-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    opacity: 0.9;
-
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      background: #60a5fa;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .close-btn {
+  .title-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    padding: 2px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    position: relative;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    &:hover::after {
-      content: attr(title);
-      position: absolute;
-      bottom: -35px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 1000;
-    }
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 9px;
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+.quota-pill {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
 }
 
-.role-panel {
-  position: absolute;
-  bottom: 120px;
-  left: 16px;
-  right: 16px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1300;
-  max-height: 300px;
-  overflow-y: auto;
-  animation: slideUp 0.2s ease-out;
-
-  .role-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-
-    h4 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-color, #374151);
-    }
-
-    .close-role-btn {
-      width: 20px;
-      height: 20px;
-      border: none;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-      color: #666;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.1);
-      }
-    }
-  }
-
-  .role-list {
-    padding: 8px;
-
-    .role-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-
-      &:hover {
-        background: rgba(59, 130, 246, 0.05);
-      }
-
-      .role-avatar {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(59, 130, 246, 0.1);
-        border-radius: 50%;
-        font-size: 16px;
-      }
-
-      .role-info {
-        flex: 1;
-
-        .role-name {
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--text-color, #374151);
-          margin-bottom: 2px;
-        }
-
-        .role-desc {
-          font-size: 11px;
-          color: var(--text-color-secondary, #9ca3af);
-          line-height: 1.3;
-        }
-      }
-    }
-  }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
   }
 }
 
 .ai-content {
-  height: calc(100% - 200px);
+  flex: 1;
+  min-height: 0;
   padding: 16px;
   overflow-y: auto;
-  background: var(--ai-bg, #f8fafc);
+  background: var(--chat-bg, var(--grey-1));
 
   &::-webkit-scrollbar {
     width: 4px;
   }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--grey-4);
     border-radius: 2px;
   }
 }
 
-.welcome-message {
+.welcome {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
+  padding: 0 12px;
+  color: var(--grey-5);
   text-align: center;
-  color: var(--text-color-secondary, #9ca3af);
-  padding: 20px;
 
   .welcome-icon {
-    margin-bottom: 16px;
-    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    background: var(--grey-0);
+    border-radius: 50%;
+    box-shadow: 0 6px 18px var(--grey-9-a1);
   }
 
   h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-color, #374151);
+    margin: 14px 0 6px;
+    font-size: 15px;
+    color: var(--text-color);
   }
 
   p {
-    margin: 0 0 24px 0;
-    font-size: 14px;
-    line-height: 1.5;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
   }
+}
 
-  .quick-actions {
-    width: 100%;
-    margin-bottom: 24px;
+.quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
 
-    .action-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-color, #374151);
-      margin-bottom: 12px;
-    }
+.quick-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--grey-6);
+  cursor: pointer;
+  background: var(--chat-bubble, var(--grey-0));
+  border: 1px solid var(--grey-2);
+  border-radius: 999px;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 
-    .action-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-
-      .quick-btn {
-        padding: 8px 12px;
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        border-radius: 8px;
-        font-size: 12px;
-        color: #3b82f6;
-        cursor: pointer;
-        transition: all 0.2s;
-
-        &:hover {
-          background: rgba(59, 130, 246, 0.15);
-          transform: translateY(-1px);
-        }
-
-        &.role-select-btn {
-          background: rgba(156, 39, 176, 0.1);
-          border-color: rgba(156, 39, 176, 0.2);
-          color: #9c27b0;
-
-          &:hover {
-            background: rgba(156, 39, 176, 0.15);
-          }
-        }
-      }
-    }
-  }
-
-  .features {
-    display: flex;
-    gap: 16px;
-
-    .feature-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--text-color-secondary, #9ca3af);
-
-      .feature-icon {
-        font-size: 16px;
-      }
-    }
+  &:hover {
+    color: var(--primary-color);
+    border-color: var(--color-pink);
   }
 }
 
 .ai-item {
-  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 14px;
 
-  &.my-ai {
-    .message-wrapper {
-      flex-direction: row-reverse;
-    }
+  &.is-user {
+    flex-direction: row-reverse;
 
-    .message-content {
+    .message-body {
       align-items: flex-end;
     }
 
-    .message-header {
-      flex-direction: row-reverse;
-    }
-
     .message-bubble {
-      background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-      color: white;
-      border-radius: 18px 18px 4px 18px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+      border-radius: 16px 16px 6px 16px;
+      box-shadow: 0 2px 8px var(--color-pink-a3);
     }
   }
-}
-
-.message-wrapper {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
 }
 
 .avatar-wrapper {
-  position: relative;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
-  .user-avatar {
+  .avatar {
     width: 36px;
     height: 36px;
+    object-fit: cover;
+    background: var(--grey-2);
+    border: 2px solid var(--grey-0);
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .ai-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  .avatar--fallback {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+  }
+
+  .ai-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+    border: 2px solid var(--grey-0);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px var(--grey-9-a1);
   }
 }
 
-.message-content {
-  flex: 1;
+.message-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  max-width: calc(100% - 60px);
-}
-
-.message-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-
-  .username {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-color, #374151);
-
-    &.my-username {
-      color: #3b82f6;
-    }
-  }
-
-  .timestamp {
-    font-size: 11px;
-    color: var(--text-color-secondary, #9ca3af);
-  }
+  min-width: 0;
+  max-width: calc(100% - 56px);
 }
 
 .message-bubble {
   position: relative;
-  padding: 10px 14px;
-  background: white;
-  border-radius: 18px 18px 18px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 100%;
+  padding: 9px 13px;
+  color: var(--text-color);
+  background: var(--chat-bubble, var(--grey-0));
+  border-radius: 16px 16px 16px 6px;
+  box-shadow: 0 1px 2px var(--grey-9-a1);
   word-wrap: break-word;
   word-break: break-word;
-  max-width: 100%;
 
-  .message-text {
-    line-height: 1.4;
-    white-space: pre-wrap;
-    font-size: 13px;
+  &.pending {
+    opacity: 0.85;
   }
 
-  .loading-dots {
-    display: flex;
-    gap: 4px;
-    align-items: center;
+  &.failed {
+    box-shadow: 0 0 0 1px var(--color-red-a3);
+  }
+}
 
-    span {
-      width: 6px;
-      height: 6px;
-      background: #9ca3af;
-      border-radius: 50%;
-      animation: loading-bounce 1.4s infinite ease-in-out;
+.message-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
 
-      &:nth-child(1) {
-        animation-delay: -0.32s;
-      }
-      &:nth-child(2) {
-        animation-delay: -0.16s;
-      }
+// 纯文本消息保留换行；Markdown 内容不能 pre-wrap，否则块之间会多出空行
+.plain-text {
+  white-space: pre-wrap;
+}
+
+.activity {
+  font-size: 12px;
+  color: var(--grey-5);
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 18px;
+
+  span {
+    width: 6px;
+    height: 6px;
+    background: var(--grey-4);
+    border-radius: 50%;
+    animation: dot 1.2s infinite ease-in-out;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
     }
   }
 }
 
-@keyframes loading-bounce {
+@keyframes dot {
   0%,
-  80%,
+  60%,
   100% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    opacity: 0.35;
+    transform: translateY(0);
   }
-  40% {
-    transform: scale(1);
+  30% {
     opacity: 1;
+    transform: translateY(-3px);
   }
 }
 
-.quick-input-bar {
-  padding: 12px 16px 4px;
+.citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
 
-  .quick-input-items {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+.citation {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 10px;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--primary-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--chat-bubble, var(--grey-0));
+  border: 1px solid var(--grey-2);
+  border-radius: 999px;
 
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    .quick-input-btn {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(59, 130, 246, 0.15);
-      border-radius: 16px;
-      font-size: 12px;
-      color: #3b82f6;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-
-      &:hover {
-        background: rgba(59, 130, 246, 0.12);
-        transform: translateY(-1px);
-      }
-    }
+  &:hover {
+    border-color: var(--color-pink);
   }
+}
+
+.retry-btn {
+  margin-top: 6px;
+  padding: 0;
+  font-size: 12px;
+  color: var(--color-red);
+  cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
 .ai-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: var(--grey-0);
+  border-top: 1px solid var(--grey-2);
+}
 
-  .input-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    margin: 0 16px 16px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    transition: border-color 0.2s;
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  background: var(--chat-bubble, var(--grey-1));
+  border: 1px solid var(--grey-2);
+  border-radius: 14px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 
-    &:focus-within {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-  }
-
-  .ai-input {
-    flex: 1;
-    min-height: 20px;
-    max-height: 80px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    resize: none;
-    outline: none;
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--text-color, #374151);
-
-    &::placeholder {
-      color: #9ca3af;
-    }
-  }
-
-  .input-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .send-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .loading-icon {
-      animation: spin 1s linear infinite;
-    }
+  &:focus-within {
+    border-color: var(--color-pink);
+    box-shadow: 0 0 0 4px var(--color-pink-a3);
   }
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
+.ai-input {
+  flex: 1;
+  min-height: 22px;
+  max-height: 96px;
+  padding: 0;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-color);
+  resize: none;
+  background: transparent;
+  border: none;
+  outline: none;
+
+  &::placeholder {
+    color: var(--grey-4);
   }
-  to {
-    transform: rotate(360deg);
+}
+
+.send-btn,
+.stop-btn {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 11px;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+
+.send-btn {
+  background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+  box-shadow: 0 4px 10px var(--color-pink-a3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px var(--color-pink-a3);
   }
+
+  &:disabled {
+    color: var(--grey-4);
+    cursor: not-allowed;
+    background: var(--grey-2);
+    box-shadow: none;
+  }
+}
+
+.stop-btn {
+  background: var(--grey-6);
+
+  &:hover {
+    background: var(--grey-7);
+  }
+
+  .stop-square {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 2px;
+  }
+}
+
+.error-hint {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  color: var(--color-red);
+}
+
+.composer-hint {
+  display: none;
+  margin: 6px 2px 0;
+  font-size: 11px;
+  color: var(--grey-5);
+  text-align: right;
+}
+
+@media (min-width: 761px) {
+  .composer-hint {
+    display: block;
+  }
+}
+
+.new-message-btn {
+  position: sticky;
+  bottom: 8px;
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px var(--color-pink-a3);
 }
 
 .ai-toggle {
   position: fixed;
-  bottom: calc(24px + 56px + 10px);
   right: 24px;
+  bottom: 92px;
+  z-index: 1000;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-radius: 50%;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
   cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 1000;
+  background: linear-gradient(135deg, var(--color-pink) 0%, var(--primary-color) 100%);
+  border-radius: 50%;
+  box-shadow: 0 10px 24px var(--color-pink-a3);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 14px 28px var(--color-pink-a3);
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-pink);
+    outline-offset: 3px;
   }
 
   .unread-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    background: #ef4444;
-    color: white;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
+    top: -2px;
+    right: -2px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid white;
-    animation: bounce 0.5s ease-out;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--color-red);
+    border: 2px solid var(--grey-0);
+    border-radius: 9px;
   }
 
   .toggle-icon {
@@ -1079,44 +889,82 @@ watch(
     justify-content: center;
     width: 100%;
     height: 100%;
-    color: white;
+
+    img {
+      display: block;
+    }
   }
 }
 
-@keyframes bounce {
-  0%,
-  20%,
-  53%,
-  80%,
-  100% {
-    transform: translate3d(0, 0, 0);
+.markdown-body {
+  :deep(p) {
+    margin: 0 0 6px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
-  40%,
-  43% {
-    transform: translate3d(0, -8px, 0);
+
+  :deep(ul),
+  :deep(ol) {
+    margin: 4px 0;
+    padding-left: 20px;
   }
-  70% {
-    transform: translate3d(0, -4px, 0);
+
+  :deep(ul) li {
+    list-style: disc;
   }
-  90% {
-    transform: translate3d(0, -2px, 0);
+
+  :deep(ol) li {
+    list-style: decimal;
+  }
+
+  :deep(a) {
+    color: var(--primary-color);
+    text-decoration: underline;
+  }
+
+  :deep(code) {
+    padding: 1px 4px;
+    font-size: 12px;
+    background: var(--grey-2);
+    border-radius: 4px;
+  }
+
+  :deep(pre) {
+    padding: 10px;
+    overflow-x: auto;
+    background: var(--grey-2);
+    border-radius: 8px;
+
+    code {
+      padding: 0;
+      background: transparent;
+    }
+  }
+
+  :deep(blockquote) {
+    margin: 6px 0;
+    padding-left: 10px;
+    color: var(--grey-6);
+    border-left: 3px solid var(--grey-3);
   }
 }
 
 @media (max-width: 760px) {
   .ai-toggle {
-    bottom: calc(16px + 56px + 5px);
     right: 16px;
+    bottom: 76px;
     width: 48px;
     height: 48px;
   }
 
-  .ai-footer {
+  .ai-content {
     padding: 12px;
   }
 
-  .ai-content {
-    padding: 12px;
+  .message-body {
+    max-width: 82%;
   }
 }
 </style>

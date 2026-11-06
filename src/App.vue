@@ -26,8 +26,8 @@
       <Player v-if="blogStore.blogInfo.website_config.website_feature.is_music_player === 1" />
       <!-- 聊天室 -->
       <ChatRoom v-if="blogStore.blogInfo.website_config.website_feature.is_chat_room === 1" />
-      <!-- AI助手（暂时屏蔽） -->
-      <!-- <AiAssistant v-if="blogStore.blogInfo.website_config.website_feature.is_ai_assistant === 1" /> -->
+      <!-- AI助手 -->
+      <AiAssistant v-if="blogStore.blogInfo.website_config.website_feature.is_ai_assistant === 1" />
     </div>
   </Provider>
 </template>
@@ -45,7 +45,7 @@ import ThirdBind from "@/components/Dialog/ThirdBind.vue";
 import PhoneBind from "@/components/Dialog/PhoneBind.vue";
 import Tool from "@/components/Tool/index.vue";
 import ChatRoom from "@/components/ChatRoom/index.vue";
-// import AiAssistant from "@/components/AiAssistant/index.vue";
+import AiAssistant from "@/components/AiAssistant/index.vue";
 
 import { useAppStore, useBlogStore, useUserStore } from "@/stores";
 

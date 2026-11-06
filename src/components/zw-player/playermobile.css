@@ -76,18 +76,21 @@
   transform: translateX(50%); /* 水平居中 */
 }
 
-.bbox {
-  left: -40px;
-  bottom: 10px;
-}
+/* 收起态贴左屏、hover 滑出只适用于窄屏；桌面沿用 player.css 的 left:15px */
+@media (max-width: 767px) {
+  .bbox {
+    left: -40px;
+    bottom: 10px;
+  }
 
-.bbox_active {
-  left: 20px;
-  bottom: 20px;
-}
+  .bbox_active {
+    left: 20px;
+    bottom: 20px;
+  }
 
-.bbox:hover:not(.bbox_active) {
-  transform: translate(45px, 0);
+  .bbox:hover:not(.bbox_active) {
+    transform: translate(45px, 0);
+  }
 }
 
 .list_box {

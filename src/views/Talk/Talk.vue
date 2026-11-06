@@ -29,11 +29,11 @@
             />
           </div>
           <div class="info" style="margin-top: 0.5rem">
-            <span class="talk-like info" @click="like">
+            <span class="talk-like info" @click="toggleLike">
               <svg-icon
                 icon-class="like"
                 size="0.8rem"
-                :class="isLike(talk.id)"
+                :class="talk.liked ? 'like-flag' : ''"
                 style="margin-right: 5px"
               ></svg-icon>
               {{ talk.like_count }}
@@ -62,7 +62,6 @@ const blogStore = useBlogStore();
 
 const cover = blogStore.getCover("talk");
 const route = useRoute();
-const isLike = computed(() => (id: number) => (userStore.isTalkLike(id) ? "like-flag" : ""));
 const data = reactive({
   commentCount: 0,
   commentType: 3,
@@ -72,22 +71,20 @@ const { commentCount, commentType, talk } = toRefs(data);
 const getCommentCount = (count: number) => {
   commentCount.value = count;
 };
-const like = () => {
+// 点赞状态由服务端返回：changed 为 false 表示幂等命中，此时不动计数
+const toggleLike = () => {
   if (!userStore.isLogin()) {
     appStore.setLoginFlag(true);
     return;
   }
-  let id = talk.value.id;
-  TalkAPI.likeTalk({ id: id }).then((res) => {
-    //判断是否点赞
-    if (userStore.isTalkLike(id)) {
-      window.$message?.error("取消点赞成功");
-      talk.value.like_count--;
-    } else {
-      window.$message?.success("点赞成功");
-      talk.value.like_count++;
+  const id = talk.value.id;
+  const request = talk.value.liked ? TalkAPI.unlikeTalk : TalkAPI.likeTalk;
+  request({ id }).then((res) => {
+    if (res.data?.changed) {
+      talk.value.like_count += res.data.liked ? 1 : -1;
     }
-    userStore.talkLike(id);
+    talk.value.liked = res.data?.liked ?? false;
+    window.$message?.info(res.data?.liked ? "点赞成功" : "取消点赞成功");
   });
 };
 onMounted(() => {

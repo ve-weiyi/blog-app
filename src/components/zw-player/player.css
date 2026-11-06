@@ -112,6 +112,15 @@
   opacity: 1;
 }
 
+/* 收起态的唱片贴在 bbox 顶部，底部会空出 20px。
+   下移 21px 让唱片底边与右下角聊天入口（bottom: 24px）落在同一基线。
+   只在桌面生效：窄屏的 bbox 本身是收起在屏幕左侧的。 */
+@media (min-width: 761px) {
+  .bbox:not(.bbox_active) .pan {
+    top: 21px;
+  }
+}
+
 .pan_c {
   width: 100%;
   height: 100%;

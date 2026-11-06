@@ -61,7 +61,7 @@
               <Share class="share-info" :url="articleHref" :title="article.article_title"></Share>
             </div>
             <div class="reward">
-              <button class="btn" :class="isLike(article.id)" @click="like">
+              <button class="btn" :class="article.liked ? 'like-btn-active' : 'like-btn'" @click="toggleLike">
                 <svg-icon icon-class="like" size="0.9rem"></svg-icon>
                 点赞
                 <span>{{ article.like_count }}</span>
@@ -196,9 +196,6 @@ const data = reactive({
 });
 const { articleLoaded, wordNum, readTime, commentType, article } = toRefs(data);
 const articleCover = computed(() => (cover: string) => "background-image:url(" + cover + ")");
-const isLike = computed(
-  () => (id: number) => (userStore.isArticleLike(id) ? "like-btn-active" : "like-btn")
-);
 const count = (value: number) => {
   if (value >= 1000) {
     return (value / 1000).toFixed(1) + "k";
@@ -211,22 +208,20 @@ const deleteHTMLTag = (content: string) => {
     .replace(/[|]*\n/, "")
     .replace(/&npsp;/gi, "");
 };
-const like = () => {
+// 点赞状态由服务端返回：changed 为 false 表示幂等命中，此时不动计数
+const toggleLike = () => {
   if (!userStore.isLogin()) {
     appStore.setLoginFlag(true);
     return;
   }
-  let id = article.value.id;
-  ArticleAPI.likeArticle({ id: id }).then((res) => {
-    //判断是否点赞
-    if (userStore.isArticleLike(id)) {
-      window.$message?.error("取消点赞成功");
-      article.value.like_count--;
-    } else {
-      window.$message?.success("点赞成功");
-      article.value.like_count++;
+  const id = article.value.id;
+  const request = article.value.liked ? ArticleAPI.unlikeArticle : ArticleAPI.likeArticle;
+  request({ id }).then((res) => {
+    if (res.data?.changed) {
+      article.value.like_count += res.data.liked ? 1 : -1;
     }
-    userStore.articleLike(id);
+    article.value.liked = res.data?.liked ?? false;
+    window.$message?.info(res.data?.liked ? "点赞成功" : "取消点赞成功");
   });
 };
 onMounted(() => {

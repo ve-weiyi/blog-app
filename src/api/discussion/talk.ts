@@ -1,8 +1,8 @@
 import request from "@/utils/request";
 import type {
-  EmptyResp,
   GetTalkReq,
   LikeTalkReq,
+  LikeResult,
   ListResult,
   QueryTalkListReq,
   Talk,
@@ -29,11 +29,18 @@ export const TalkAPI = {
   },
 
   /** 点赞说说 */
-  likeTalk(params: LikeTalkReq): Promise<ApiResponse<EmptyResp>> {
+  likeTalk(params: LikeTalkReq): Promise<ApiResponse<LikeResult>> {
     return request({
       url: `/api/v1/talks/${params.id}/like`,
       method: "POST",
-      params: params,
+    });
+  },
+
+  /** 取消点赞说说 */
+  unlikeTalk(params: LikeTalkReq): Promise<ApiResponse<LikeResult>> {
+    return request({
+      url: `/api/v1/talks/${params.id}/like`,
+      method: "DELETE",
     });
   },
 };

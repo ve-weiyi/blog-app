@@ -44,7 +44,16 @@ const mockWebsiteConfig = {
   websocket_url: "ws://localhost:9420/api/v1/websocket",
   tourist_avatar: "",
   user_avatar: "",
-  website_feature: {},
+  // 预览/开发默认打开音乐播放器；关闭后 App.vue 不会挂载 Player 组件
+  website_feature: {
+    is_chat_room: 1,
+    is_ai_assistant: 1,
+    is_music_player: 1,
+    is_comment_review: 0,
+    is_email_notice: 1,
+    is_message_review: 0,
+    is_reward: 0,
+  },
   website_info: mockWebsiteInfo,
   reward_qr_code: {},
   social_login_list: [],

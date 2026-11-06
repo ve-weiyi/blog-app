@@ -20,15 +20,36 @@
           @click="appStore.setSearchFlag(true)"
         ></svg-icon>
       </li>
+      <li v-if="loggedIn" class="item">
+        <n-badge
+          :value="notificationStore.total"
+          :max="99"
+          :show="notificationStore.total > 0"
+          :offset="[2, 2]"
+        >
+          <svg-icon
+            style="cursor: pointer"
+            icon-class="laba"
+            @click="router.push('/notification')"
+          ></svg-icon>
+        </n-badge>
+      </li>
     </ul>
   </header>
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "@/stores";
+import { useRouter } from "vue-router";
+import { useAppStore, useNotificationStore } from "@/stores";
+import { AuthStorage } from "@/utils/auth";
 import { useDark, useScroll, useToggle } from "@vueuse/core";
 
 const appStore = useAppStore();
+const notificationStore = useNotificationStore();
+const router = useRouter();
+
+// 登录态存在本地存储里，不是响应式数据；导航时由路由钩子对齐，这里只决定入口是否显示
+const loggedIn = computed(() => !!AuthStorage.getToken());
 const { y } = useScroll(window);
 const isDark = useDark({
   selector: "html",

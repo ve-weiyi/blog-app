@@ -9,6 +9,20 @@ export const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/unsubscribe",
+    component: () => import("@/views/Unsubscribe/index.vue"),
+    meta: {
+      title: "退订通知",
+    },
+  },
+  {
+    path: "/notification",
+    component: () => import("@/views/Notification/index.vue"),
+    meta: {
+      title: "通知",
+    },
+  },
+  {
     path: "/message",
     component: () => import("@/views/Message/index.vue"),
     meta: {

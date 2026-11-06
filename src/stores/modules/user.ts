@@ -8,7 +8,6 @@ import type {
   MobileLoginReq,
   LoginResp,
   GetMeResp,
-  GetMeLikeResp,
 } from "@/api";
 
 /**
@@ -16,7 +15,6 @@ import type {
  */
 interface UserState {
   userInfo: GetMeResp;
-  userLike: GetMeLikeResp;
 }
 
 // 多个并发请求遇到 token 过期时，共享同一次 refresh 请求
@@ -66,11 +64,6 @@ export const useUserStore = defineStore("useUserStore", {
         coin: 0,
         created_at: 0,
         third_party: [],
-      },
-      userLike: {
-        article_like_set: [],
-        comment_like_set: [],
-        talk_like_set: [],
       },
     },
   actions: {
@@ -151,21 +144,6 @@ export const useUserStore = defineStore("useUserStore", {
           });
       });
     },
-    getMeLike(): Promise<ApiResponse<GetMeLikeResp>> {
-      if (!this.isLogin()) {
-        return Promise.reject("未登录");
-      }
-      return new Promise((resolve, reject) => {
-        MeAPI.getMeLike()
-          .then((res) => {
-            this.userLike = res.data;
-            resolve(res);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    },
     refreshTokenOnce(): Promise<void> {
       if (refreshPromise) return refreshPromise;
 
@@ -185,39 +163,6 @@ export const useUserStore = defineStore("useUserStore", {
 
     isLogin() {
       return AuthStorage.getToken() != undefined;
-    },
-    articleLike(articleId: number) {
-      const articleLikeSet = this.userLike.article_like_set;
-      if (articleLikeSet.indexOf(articleId) != -1) {
-        articleLikeSet.splice(articleLikeSet.indexOf(articleId), 1);
-      } else {
-        articleLikeSet.push(articleId);
-      }
-    },
-    commentLike(commentId: number) {
-      const commentLikeSet = this.userLike.comment_like_set;
-      if (commentLikeSet.indexOf(commentId) != -1) {
-        commentLikeSet.splice(commentLikeSet.indexOf(commentId), 1);
-      } else {
-        commentLikeSet.push(commentId);
-      }
-    },
-    talkLike(talkId: number) {
-      const talkLikeSet = this.userLike.talk_like_set;
-      if (talkLikeSet.indexOf(talkId) != -1) {
-        talkLikeSet.splice(talkLikeSet.indexOf(talkId), 1);
-      } else {
-        talkLikeSet.push(talkId);
-      }
-    },
-    isArticleLike(articleId: number) {
-      return this.userLike.article_like_set.indexOf(articleId) != -1;
-    },
-    isCommentLike(commentId: number) {
-      return this.userLike.comment_like_set.indexOf(commentId) != -1;
-    },
-    isTalkLike(talkId: number) {
-      return this.userLike.talk_like_set.indexOf(talkId) != -1;
     },
   },
   getters: {},

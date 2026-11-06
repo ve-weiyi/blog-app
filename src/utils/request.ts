@@ -36,29 +36,39 @@ const http = axios.create({
   paramsSerializer: (params) => qs.stringify(params, { arrayFormat: "repeat" }),
 });
 
+/**
+ * 构建请求头。
+ *
+ * SSE 走 fetch 而不是 axios，拿不到拦截器，所以头部构造单独抽出来共用一份，
+ * 避免两条链路在协议上悄悄分叉。
+ */
+export async function buildRequestHeaders(): Promise<Record<string, string>> {
+  const uid = AuthStorage.getUid();
+  const token = AuthStorage.getToken();
+  const deviceId = AuthStorage.getDeviceId() || "";
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(deviceId + timestamp)
+  );
+  const deviceToken = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return {
+    [HeaderAppName]: APP_NAME,
+    [HeaderTimestamp]: timestamp,
+    [HeaderXDeviceId]: deviceId,
+    [HeaderXDeviceToken]: deviceToken,
+    [HeaderUid]: uid ?? "",
+    [HeaderAuthorization]: token ? `Bearer ${token}` : "",
+  };
+}
+
 // 请求拦截器
 http.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const uid = AuthStorage.getUid();
-    const token = AuthStorage.getToken();
-    const deviceId = AuthStorage.getDeviceId() || "";
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const hashBuffer = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(deviceId + timestamp)
-    );
-    const deviceToken = Array.from(new Uint8Array(hashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    config.headers = Object.assign({}, config.headers, {
-      [HeaderAppName]: APP_NAME,
-      [HeaderTimestamp]: timestamp,
-      [HeaderXDeviceId]: deviceId,
-      [HeaderXDeviceToken]: deviceToken,
-      [HeaderUid]: uid,
-      [HeaderAuthorization]: token ? `Bearer ${token}` : "",
-    });
+    config.headers = Object.assign({}, config.headers, await buildRequestHeaders());
     return config;
   },
   (error: AxiosError) => Promise.reject(error)

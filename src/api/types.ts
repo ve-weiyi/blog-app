@@ -1,3 +1,7 @@
+export interface AffectedResp {
+  success_count: number;
+}
+
 export interface Album {
   id: number; // 主键
   album_name: string; // 相册名
@@ -28,6 +32,7 @@ export interface ArticleHome {
   tag_name_list: string[];
   like_count: number;
   view_count: number;
+  liked: boolean; // 当前用户是否已赞
 }
 
 export interface ArticlePreview {
@@ -36,6 +41,7 @@ export interface ArticlePreview {
   article_title: string;
   like_count: number;
   view_count: number;
+  liked: boolean; // 当前用户是否已赞
   created_at: number;
 }
 
@@ -79,6 +85,7 @@ export interface Comment {
   type: number;
   created_at: number;
   like_count: number;
+  liked: boolean; // 当前用户是否已赞
   guest_info: GuestInfoVO;
   user_info: UserInfoVO;
   reply_user_info: UserInfoVO;
@@ -111,6 +118,7 @@ export interface CommentReply {
   type: number;
   created_at: number;
   like_count: number;
+  liked: boolean; // 当前用户是否已赞
   guest_info: GuestInfoVO;
   user_info: UserInfoVO;
   reply_user_info: UserInfoVO;
@@ -167,6 +175,10 @@ export interface EmailLoginReq {
 }
 
 export interface EmptyReq {
+}
+
+export interface DeleteNotificationReq {
+  group_key: string; // 列表下发的不透明键
 }
 
 export interface EmptyResp {
@@ -242,17 +254,6 @@ export interface GetGuestResp {
   ip_source: string; // IP归属地
 }
 
-// 获取用户点赞集合请求
-export interface GetMeLikeReq {
-}
-
-// 获取用户点赞集合响应
-export interface GetMeLikeResp {
-  article_like_set: number[]; // 文章点赞集合
-  comment_like_set: number[]; // 评论点赞集合
-  talk_like_set: number[]; // 说说点赞集合
-}
-
 // 获取当前用户信息请求
 export interface GetMeReq {
 }
@@ -297,6 +298,11 @@ export interface GuestInfoVO {
 
 export interface LikeArticleReq {
   id: number;
+}
+
+export interface LikeResult {
+  liked: boolean; // 操作后的状态
+  changed: boolean; // 本次调用是否改变了状态
 }
 
 export interface LikeCommentReq {
@@ -361,6 +367,30 @@ export interface NoticeVO {
 }
 
 // 第三方登录（前端携带code）
+export interface NotificationGroupVO {
+  group_key: string; // 不透明键，原样回传用于整组已读 / 删除
+  scene: string;
+  title: string;
+  content: string;
+  link: string;
+  level: string;
+  actor_count: number;
+  latest_actor_name: string;
+  latest_at: number;
+  unread: boolean;
+}
+
+export interface NotificationPreferenceVO {
+  group: string;
+  channel: string;
+  enabled: boolean;
+  mandatory: boolean;
+}
+
+export interface NotifyPreferenceListResp {
+  list: NotificationPreferenceVO[];
+}
+
 export interface OauthLoginReq {
   platform: string; // 平台
   code: string; // 授权码
@@ -475,6 +505,11 @@ export interface QueryMessageListReq extends ListQuery {
   sorts?: string[]; // 排序
 }
 
+export interface QueryNotificationListReq extends ListQuery {
+  groups?: string[];
+  unread_only?: boolean;
+}
+
 export interface QueryPageListReq extends ListQuery {
   page?: number; // 当前页码
   page_size?: number; // 每页数量
@@ -544,6 +579,10 @@ export interface RewardQrCode {
 }
 
 // 发送邮箱验证码
+export interface ReadNotificationReq {
+  group_key: string;
+}
+
 export interface SendEmailCodeReq {
   email: string; // 邮箱
   type: string; // login / register / reset_password / bind_email
@@ -585,6 +624,7 @@ export interface Talk {
   status: number; // 状态 1.公开 2.私密
   like_count: number; // 点赞量
   comment_count: number; // 评论量
+  liked: boolean; // 当前用户是否已赞
   created_at: number; // 创建时间
   updated_at: number; // 更新时间
   user_info: UserInfoVO; // 用户信息
@@ -608,6 +648,28 @@ export interface Token {
 // 解绑第三方平台请求
 export interface UnbindMeThirdPartyReq {
   platform: string; // 平台
+}
+
+export interface UnreadCountReq {
+  groups?: string[];
+}
+
+export interface UnreadCountResp {
+  total: number;
+  group_counts: Record<string, number>;
+}
+
+export interface UnsubscribeReq {
+  token: string;
+}
+
+export interface UnsubscribeVerifyReq {
+  token: string;
+}
+
+export interface UnsubscribeVerifyResp {
+  group: string;
+  channel: string;
 }
 
 export interface UpdateCommentReq {
@@ -640,6 +702,10 @@ export interface UserInfoExt {
   gender?: number; // 性别 0未知 1男 2女
   intro?: string; // 简介
   website?: string; // 网站
+}
+
+export interface UpdateNotifyPreferenceReq {
+  list: NotificationPreferenceVO[];
 }
 
 export interface UserInfoVO {

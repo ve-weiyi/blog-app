@@ -6,8 +6,6 @@ import type {
   DeactivateAccountReq,
   DeactivateAccountResp,
   EmptyResp,
-  GetMeLikeReq,
-  GetMeLikeResp,
   GetMeReq,
   GetMeResp,
   ReactivateAccountReq,
@@ -52,15 +50,6 @@ export const MeAPI = {
       url: `/api/v1/me/deactivate`,
       method: "POST",
       data: data,
-    });
-  },
-
-  /** 获取用户点赞集合 */
-  getMeLike(params?: GetMeLikeReq): Promise<ApiResponse<GetMeLikeResp>> {
-    return request({
-      url: `/api/v1/me/likes`,
-      method: "GET",
-      params: params,
     });
   },
 

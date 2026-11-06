@@ -18,6 +18,7 @@ import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
 import { createHtmlPlugin } from "vite-plugin-html";
 import { prismjsPlugin } from "vite-plugin-prismjs";
 import { mockDevServerPlugin } from "vite-plugin-mock-dev-server";
+import { aiStreamMockPlugin } from "./mock/ai-stream-plugin.ts";
 import VueDevtools from "vite-plugin-vue-devtools";
 import progress from "vite-plugin-progress";
 import compression from "vite-plugin-compression";
@@ -77,7 +78,7 @@ export default defineConfig((configEnv): UserConfig => {
       /** 端口号 */
       port: Number(env.VITE_APP_PORT),
       /** 是否自动打开浏览器 */
-      open: false,
+      open: true,
       /** 跨域设置允许 */
       cors: true,
       /** 端口被占用时，是否直接退出 */
@@ -208,7 +209,7 @@ export default defineConfig((configEnv): UserConfig => {
        * 开发态 mock 服务，按 VITE_MOCK_DEV_SERVER 开关
        */
       ...(env.VITE_MOCK_DEV_SERVER === "true"
-        ? [mockDevServerPlugin({ prefix: [env.VITE_APP_BASE_API] })]
+        ? [aiStreamMockPlugin(), mockDevServerPlugin({ prefix: [env.VITE_APP_BASE_API] })]
         : []),
       /**
        * 支持 `.vue` 文件的解析

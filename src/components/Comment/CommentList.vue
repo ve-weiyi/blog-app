@@ -224,18 +224,15 @@ const handleLikeComment = async (comment: Comment | CommentReply) => {
   if (!checkLogin()) return;
 
   try {
-    await CommentAPI.likeComment({ id: comment.id });
+    // 点赞状态由服务端返回：changed 为 false 表示幂等命中，此时不动计数
+    const request = comment.liked ? CommentAPI.unlikeComment : CommentAPI.likeComment;
+    const res = await request({ id: comment.id });
 
-    const isLiked = userStore.isCommentLike(comment.id);
-    if (isLiked) {
-      comment.like_count--;
-      showMessage("success", "取消点赞成功");
-    } else {
-      comment.like_count++;
-      showMessage("success", "点赞成功");
+    if (res.data?.changed) {
+      comment.like_count += res.data.liked ? 1 : -1;
     }
-
-    userStore.commentLike(comment.id);
+    comment.liked = res.data?.liked ?? false;
+    showMessage("success", res.data?.liked ? "点赞成功" : "取消点赞成功");
   } catch (error: any) {
     showMessage("error", error.message);
   }
@@ -333,9 +330,6 @@ const loadMoreComments = () => {
 
 // 生命周期
 onMounted(async () => {
-  if (userStore.isLogin()) {
-    await userStore.getMeLike();
-  }
   await loadComments();
 });
 </script>

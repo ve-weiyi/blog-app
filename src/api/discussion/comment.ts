@@ -3,6 +3,7 @@ import type {
   CreateCommentReq,
   EmptyResp,
   LikeCommentReq,
+  LikeResult,
   ListResult,
   QueryCommentListReq,
   QueryCommentReplyListReq,
@@ -57,11 +58,18 @@ export const CommentAPI = {
   },
 
   /** 点赞评论 */
-  likeComment(params: LikeCommentReq): Promise<ApiResponse<EmptyResp>> {
+  likeComment(params: LikeCommentReq): Promise<ApiResponse<LikeResult>> {
     return request({
       url: `/api/v1/comments/${params.id}/like`,
       method: "POST",
-      params: params,
+    });
+  },
+
+  /** 取消点赞评论 */
+  unlikeComment(params: LikeCommentReq): Promise<ApiResponse<LikeResult>> {
+    return request({
+      url: `/api/v1/comments/${params.id}/like`,
+      method: "DELETE",
     });
   },
 };
